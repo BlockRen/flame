@@ -61,9 +61,24 @@ class ContactCallbacks extends ContactListener {
     }
   }
 
+  // @override
+  // void beginContact(Contact contact) =>
+  //     _callbacks.forEach((c) => _maybeCallback(contact, c, c.begin));
   @override
-  void beginContact(Contact contact) =>
-      _callbacks.forEach((c) => _maybeCallback(contact, c, c.begin));
+  void beginContact(Contact contact) {
+    final a = contact.fixtureA.body.userData;
+    final b = contact.fixtureB.body.userData;
+    if (a == null || b == null) {
+      return;
+    }
+    if (!(a is ContactCallback) || !(b is ContactCallback)) {
+      return;
+    }
+    ContactCallbackFun fa = (a as ContactCallback).begin;
+    fa(a, b, contact);
+    ContactCallbackFun fb = (b as ContactCallback).begin;
+    fb(b, a, contact);
+  }
 
   @override
   void endContact(Contact contact) =>

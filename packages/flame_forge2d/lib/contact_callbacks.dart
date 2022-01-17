@@ -16,19 +16,6 @@ abstract class ContactCallback<Type1, Type2> {
 /// 出了回调，导致错误。
 /// 重写了此类，取消forEach循环，修正错误，并可提升性能。
 class ContactCallbacks extends ContactListener {
-  final List<ContactCallback> _callbacks = [];
-
-  void register(ContactCallback callback) {
-    _callbacks.add(callback);
-  }
-
-  void deregister(ContactCallback callback) {
-    _callbacks.remove(callback);
-  }
-
-  void clear() {
-    _callbacks.clear();
-  }
 
   void _specificCallback(Contact contact, ContactCallbackFun f) {
     final a = contact.fixtureA.body.userData;

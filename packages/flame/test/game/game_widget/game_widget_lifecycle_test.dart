@@ -15,13 +15,13 @@ class _MyGame extends FlameGame {
   }
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
+  Future<void>? onLoad() {
     events.add('onLoad');
+    return null;
   }
 
   @override
-  Future<void>? onMount() {
+  void onMount() {
     events.add('onMount');
   }
 
@@ -114,7 +114,7 @@ class _MyApp extends StatelessWidget {
 class _MyContainer extends StatefulWidget {
   final List<String> events;
 
-  const _MyContainer(this.events, {Key? key}) : super(key: key);
+  const _MyContainer(this.events);
 
   @override
   State<_MyContainer> createState() => _MyContainerState();
@@ -199,7 +199,7 @@ void main() {
       expect(events, ['onGameResize']); // no onRemove
       final game =
           tester.allWidgets.whereType<GameWidget<_MyGame>>().first.game;
-      expect(game.children, everyElement((Component c) => c.parent == game));
+      expect(game?.children, everyElement((Component c) => c.parent == game));
     });
 
     testWidgets('all events are executed in the correct order', (tester) async {

@@ -49,14 +49,14 @@ class _PanGame extends FlameGame with PanDetector {
 }
 
 void main() {
-  final horizontalGame = FlameTester(() => _HorizontalDragGame());
-  final verticalGame = FlameTester(() => _VerticalDragGame());
-  final panGame = FlameTester(() => _PanGame());
+  final horizontalGame = FlameTester(_HorizontalDragGame.new);
+  final verticalGame = FlameTester(_VerticalDragGame.new);
+  final panGame = FlameTester(_PanGame.new);
 
   group('GameWidget - HorizontalDragDetector', () {
-    horizontalGame.widgetTest(
+    horizontalGame.testGameWidget(
       'register drags',
-      (game, tester) async {
+      verify: (game, tester) async {
         await tester.drag(
           find.byGame<_HorizontalDragGame>(),
           const Offset(50, 0),
@@ -69,9 +69,9 @@ void main() {
   });
 
   group('GameWidget - VerticalDragDetector', () {
-    verticalGame.widgetTest(
+    verticalGame.testGameWidget(
       'register drags',
-      (game, tester) async {
+      verify: (game, tester) async {
         await tester.drag(
           find.byGame<_VerticalDragGame>(),
           const Offset(50, 0),
@@ -84,9 +84,9 @@ void main() {
   });
 
   group('GameWidget - PanDetector', () {
-    panGame.widgetTest(
+    panGame.testGameWidget(
       'register drags',
-      (game, tester) async {
+      verify: (game, tester) async {
         await tester.drag(
           find.byGame<_PanGame>(),
           const Offset(50, 0),

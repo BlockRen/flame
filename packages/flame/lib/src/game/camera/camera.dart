@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import '../../../components.dart';
-import '../../../extensions.dart';
-import '../../../game.dart';
+import 'package:flame/components.dart';
+import 'package:flame/extensions.dart';
+import 'package:flame/game.dart';
 
 /// A camera translates your game coordinate system; this is useful when your
 /// world is not 1:1 with your screen size.
@@ -38,6 +38,11 @@ import '../../../game.dart';
 /// the position where components are rendered with relation to the Viewport.
 /// Components marked as `positionType = PositionType.viewport;` are
 /// always rendered in screen coordinates, bypassing the camera altogether.
+///
+/// Note: beware of using very large numbers with the camera (like coordinates
+/// spanning the dozens of millions). Due to the required matrix operations
+/// performed by the Camera, using such large numbers can cause performance
+/// issues. Consider breaking down huge maps into manageable chunks.
 class Camera extends Projector {
   Camera() : _viewport = DefaultViewport() {
     _combinedProjector = Projector.compose([this, _viewport]);
@@ -156,7 +161,7 @@ class Camera extends Projector {
   /// When using this method you are responsible for saving/restoring canvas
   /// state to avoid leakage.
   void apply(Canvas canvas) {
-    canvas.transform(_transformMatrix(position, zoom).storage);
+    canvas.transform(_transformMatrix().storage);
   }
 
   Vector2? _canvasSize;
@@ -173,7 +178,7 @@ class Camera extends Projector {
     _viewport.resize(canvasSize);
   }
 
-  Matrix4 _transformMatrix(Vector2 position, double zoom) {
+  Matrix4 _transformMatrix() {
     final translateX = -_position.x * zoom;
     final translateY = -_position.y * zoom;
     if (_transform.m11 == zoom &&
@@ -332,7 +337,7 @@ class Camera extends Projector {
 
     final bounds = worldBounds;
     if (bounds != null) {
-      if (bounds.width > gameSize.x * zoom) {
+      if (bounds.width > gameSize.x) {
         final cameraLeftEdge = attemptedTarget.x;
         final cameraRightEdge = attemptedTarget.x + gameSize.x;
         if (cameraLeftEdge < bounds.left) {
@@ -344,7 +349,7 @@ class Camera extends Projector {
         attemptedTarget.x = (gameSize.x - bounds.width) / 2;
       }
 
-      if (bounds.height > gameSize.y * zoom) {
+      if (bounds.height > gameSize.y) {
         final cameraTopEdge = attemptedTarget.y;
         final cameraBottomEdge = attemptedTarget.y + gameSize.y;
         if (cameraTopEdge < bounds.top) {

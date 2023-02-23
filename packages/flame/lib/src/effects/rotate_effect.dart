@@ -1,6 +1,8 @@
-import 'controllers/effect_controller.dart';
-import 'measurable_effect.dart';
-import 'transform2d_effect.dart';
+import 'package:flame/src/effects/controllers/effect_controller.dart';
+import 'package:flame/src/effects/effect.dart';
+import 'package:flame/src/effects/effect_target.dart';
+import 'package:flame/src/effects/measurable_effect.dart';
+import 'package:flame/src/effects/provider_interfaces.dart';
 
 /// Rotate a component around its anchor.
 ///
@@ -16,13 +18,25 @@ import 'transform2d_effect.dart';
 /// This effect applies incremental changes to the component's angle, and
 /// requires that any other effect or update logic applied to the same component
 /// also used incremental updates.
-class RotateEffect extends Transform2DEffect implements MeasurableEffect {
-  RotateEffect.by(double angle, EffectController controller)
-      : _angle = angle,
-        super(controller);
+class RotateEffect extends Effect
+    with EffectTarget<AngleProvider>
+    implements MeasurableEffect {
+  RotateEffect.by(
+    double angle,
+    super.controller, {
+    super.onComplete,
+  }) : _angle = angle;
 
-  factory RotateEffect.to(double angle, EffectController controller) {
-    return _RotateToEffect(angle, controller);
+  factory RotateEffect.to(
+    double angle,
+    EffectController controller, {
+    void Function()? onComplete,
+  }) {
+    return _RotateToEffect(
+      angle,
+      controller,
+      onComplete: onComplete,
+    );
   }
 
   /// The magnitude of the effect: how much the target should turn as the
@@ -33,7 +47,6 @@ class RotateEffect extends Transform2DEffect implements MeasurableEffect {
   void apply(double progress) {
     final dProgress = progress - previousProgress;
     target.angle += _angle * dProgress;
-    super.apply(progress);
   }
 
   @override
@@ -41,9 +54,12 @@ class RotateEffect extends Transform2DEffect implements MeasurableEffect {
 }
 
 class _RotateToEffect extends RotateEffect {
-  _RotateToEffect(double angle, EffectController controller)
-      : _destinationAngle = angle,
-        super.by(0, controller);
+  _RotateToEffect(
+    double angle,
+    EffectController controller, {
+    void Function()? onComplete,
+  })  : _destinationAngle = angle,
+        super.by(0, controller, onComplete: onComplete);
 
   final double _destinationAngle;
 

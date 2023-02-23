@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
+import 'package:flame/geometry.dart';
 import 'package:flutter/material.dart';
 
 class MoveEffectExample extends FlameGame {
@@ -13,6 +13,8 @@ class MoveEffectExample extends FlameGame {
 
     The middle green square has a combination of two movement effects: a
     `MoveEffect.to` and a `MoveEffect.by` which forces it to periodically jump.
+
+    The purple square executes a sequence of shake effects.
 
     At the bottom there are 60 more components which demonstrate movement along
     an arbitrary path using `MoveEffect.along`.
@@ -31,7 +33,9 @@ class MoveEffectExample extends FlameGame {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5.0
       ..color = Colors.greenAccent;
+    final paint3 = Paint()..color = const Color(0xffb372dc);
 
+    // Red square, moving back and forth
     add(
       RectangleComponent.square(
         position: Vector2(20, 50),
@@ -49,6 +53,8 @@ class MoveEffectExample extends FlameGame {
           ),
         ),
     );
+
+    // Green square, moving and jumping
     add(
       RectangleComponent.square(
         position: Vector2(20, 150),
@@ -76,6 +82,29 @@ class MoveEffectExample extends FlameGame {
               curve: Curves.ease,
               infinite: true,
             ),
+          ),
+        ),
+    );
+
+    add(
+      RectangleComponent.square(
+        size: 15,
+        position: Vector2(40, 240),
+        paint: paint3,
+      )..add(
+          SequenceEffect(
+            [
+              MoveEffect.by(
+                Vector2(5, 0),
+                NoiseEffectController(duration: 1, frequency: 20),
+              ),
+              MoveEffect.by(Vector2.zero(), LinearEffectController(2)),
+              MoveEffect.by(
+                Vector2(0, 10),
+                NoiseEffectController(duration: 1, frequency: 10),
+              ),
+            ],
+            infinite: true,
           ),
         ),
     );

@@ -1,9 +1,8 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/spritesheet.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
-import '../spritesheet.dart';
 
 /// This is just a pair of <int, int>.
 ///
@@ -29,7 +28,7 @@ class Block {
   }
 
   @override
-  int get hashCode => hashValues(x, y);
+  int get hashCode => Object.hash(x, y);
 }
 
 /// This component renders a tilemap, represented by an int matrix, given a
@@ -57,38 +56,41 @@ class IsometricTileMapComponent extends PositionComponent {
     this.matrix, {
     this.destTileSize,
     this.tileHeight,
-    Vector2? position,
-    Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
-  }) : super(
-          position: position,
-          size: size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
-        );
+    super.position,
+    super.size,
+    super.scale,
+    super.angle,
+    super.anchor,
+    super.children,
+    super.priority,
+  }) : _renderSprite = Sprite(tileset.image);
 
   /// This is the size the tiles will be drawn (either original or overwritten).
   Vector2 get effectiveTileSize => destTileSize ?? tileset.srcSize;
 
-  /// This is the vertical height of each block; by default it's half the tile
-  /// size.
+  /// The current scaling factor for the isometric view.
+  double get scalingFactor => effectiveTileSize.y / effectiveTileSize.x;
+
+  /// This is the vertical height of each block; by default it's half the
+  /// tile size.
   double get effectiveTileHeight => tileHeight ?? (effectiveTileSize.y / 2);
 
+  Sprite _renderSprite;
   @override
   void render(Canvas c) {
+    _renderSprite.image = tileset.image;
     final size = effectiveTileSize;
     for (var i = 0; i < matrix.length; i++) {
       for (var j = 0; j < matrix[i].length; j++) {
         final element = matrix[i][j];
         if (element != -1) {
-          final sprite = tileset.getSpriteById(element);
+          _renderSprite = tileset.getSpriteById(element);
           final p = getBlockRenderPositionInts(j, i);
-          sprite.render(c, position: p, size: size);
+          _renderSprite.render(
+            c,
+            position: p,
+            size: size,
+          );
         }
       }
     }
@@ -105,7 +107,10 @@ class IsometricTileMapComponent extends PositionComponent {
 
   /// Same as getBlockRenderPosition but the arguments are exploded as integers.
   Vector2 getBlockRenderPositionInts(int i, int j) {
-    final halfTile = effectiveTileSize / 2;
+    final halfTile = Vector2(
+      effectiveTileSize.x / 2,
+      (effectiveTileSize.y / 2) / scalingFactor,
+    )..multiply(scale);
     final pos = Vector2(i.toDouble(), j.toDouble())..multiply(halfTile);
     return cartToIso(pos) - halfTile;
   }
@@ -116,21 +121,23 @@ class IsometricTileMapComponent extends PositionComponent {
   /// This is the opposite of [getBlock].
   Vector2 getBlockCenterPosition(Block block) {
     final tile = effectiveTileSize;
-    return getBlockRenderPosition(block) +
-        Vector2(tile.x / 2, tile.y - effectiveTileHeight - tile.y / 4);
+    final result = getBlockRenderPosition(block) +
+        (Vector2(tile.x / 2, tile.y - effectiveTileHeight - tile.y / 4)
+          ..multiply(scale));
+    return result;
   }
 
   /// Converts a coordinate from the isometric space to the cartesian space.
   Vector2 isoToCart(Vector2 p) {
-    final x = (2 * p.y + p.x) / 2;
-    final y = (2 * p.y - p.x) / 2;
+    final x = p.y / scalingFactor + p.x / 2;
+    final y = p.y - p.x * scalingFactor / 2;
     return Vector2(x, y);
   }
 
   /// Converts a coordinate from the cartesian space to the isometric space.
   Vector2 cartToIso(Vector2 p) {
     final x = p.x - p.y;
-    final y = (p.x + p.y) / 2;
+    final y = ((p.x + p.y) * scalingFactor) / 2;
     return Vector2(x, y);
   }
 
@@ -139,8 +146,8 @@ class IsometricTileMapComponent extends PositionComponent {
   /// This can be used to handle clicks or hovers.
   /// This is the opposite of [getBlockCenterPosition].
   Block getBlock(Vector2 p) {
-    final halfTile = effectiveTileSize / 2;
-    final multiplier = 1 - halfTile.y / (2 * effectiveTileHeight);
+    final halfTile = (effectiveTileSize / 2)..multiply(scale);
+    final multiplier = 1 - halfTile.y / (2 * effectiveTileHeight * scale.x);
     final delta = halfTile.clone()..multiply(Vector2(1, multiplier));
     final cart = isoToCart(p - position + delta);
     final px = (cart.x / halfTile.x - 1).ceil();
@@ -154,7 +161,9 @@ class IsometricTileMapComponent extends PositionComponent {
   Block getBlockRenderedAt(Vector2 p) {
     final tile = effectiveTileSize;
     return getBlock(
-      p + Vector2(tile.x / 2, tile.y - effectiveTileHeight - tile.y / 4),
+      p +
+          (Vector2(tile.x / 2, tile.y - effectiveTileHeight - tile.y / 4)
+            ..multiply(scale)),
     );
   }
 

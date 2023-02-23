@@ -1,7 +1,6 @@
+import 'package:flame/components.dart';
+import 'package:flame/input.dart';
 import 'package:meta/meta.dart';
-
-import '../../../components.dart';
-import '../../../input.dart';
 
 /// The [ButtonComponent] bundles two [PositionComponent]s, one that shows while
 /// the button is being pressed, and one that shows otherwise.
@@ -13,39 +12,41 @@ class ButtonComponent extends PositionComponent with Tappable {
   late final PositionComponent? buttonDown;
 
   /// Callback for what should happen when the button is pressed.
-  /// If you want to interact with [onTapUp] or [onTapCancel] it is recommended
-  /// to extend [ButtonComponent].
   void Function()? onPressed;
+
+  /// Callback for what should happen when the button is released.
+  void Function()? onReleased;
+
+  /// Callback for what should happen when the button is cancelled.
+  void Function()? onCancelled;
 
   ButtonComponent({
     this.button,
     this.buttonDown,
     this.onPressed,
-    Vector2? position,
+    this.onReleased,
+    this.onCancelled,
+    super.position,
     Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
+    super.scale,
+    super.angle,
+    super.anchor,
+    super.children,
+    super.priority,
   }) : super(
-          position: position,
           size: size ?? button?.size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
         );
 
   @override
   @mustCallSuper
   void onMount() {
+    super.onMount();
     assert(
       button != null,
       'The button has to either be passed in as an argument or set in onLoad',
     );
-    final idleButton = button;
-    if (idleButton != null && !contains(idleButton)) {
-      add(idleButton);
+    if (!contains(button!)) {
+      add(button!);
     }
   }
 
@@ -53,10 +54,8 @@ class ButtonComponent extends PositionComponent with Tappable {
   @mustCallSuper
   bool onTapDown(TapDownInfo info) {
     if (buttonDown != null) {
-      if (button != null) {
-        remove(button!);
-      }
-      add(buttonDown!);
+      button!.removeFromParent();
+      buttonDown!.parent = this;
     }
     onPressed?.call();
     return false;
@@ -65,7 +64,11 @@ class ButtonComponent extends PositionComponent with Tappable {
   @override
   @mustCallSuper
   bool onTapUp(TapUpInfo info) {
-    onTapCancel();
+    if (buttonDown != null) {
+      buttonDown!.removeFromParent();
+      button!.parent = this;
+    }
+    onReleased?.call();
     return true;
   }
 
@@ -73,11 +76,10 @@ class ButtonComponent extends PositionComponent with Tappable {
   @mustCallSuper
   bool onTapCancel() {
     if (buttonDown != null) {
-      remove(buttonDown!);
-      if (button != null) {
-        add(button!);
-      }
+      buttonDown!.removeFromParent();
+      button!.parent = this;
     }
+    onCancelled?.call();
     return false;
   }
 }

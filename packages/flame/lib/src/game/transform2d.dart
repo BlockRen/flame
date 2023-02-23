@@ -1,7 +1,8 @@
 import 'dart:math' as math;
+
+import 'package:flame/src/game/notifying_vector2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vector_math/vector_math_64.dart';
-import 'notifying_vector2.dart';
 
 /// This class describes a generic 2D transform, which is a combination of
 /// translations, rotations, reflections and scaling. These transforms are
@@ -52,6 +53,17 @@ class Transform2D extends ChangeNotifier {
     ..position = other.position
     ..scale = other.scale
     ..offset = other.offset;
+
+  /// Clone of this.
+  Transform2D clone() => Transform2D.copy(this);
+
+  /// Set this to the values of the [other] [Transform2D].
+  void setFrom(Transform2D other) {
+    angle = other.angle;
+    position = other.position;
+    scale = other.scale;
+    offset = other.offset;
+  }
 
   /// Check whether this transform is equal to [other], up to the given
   /// [tolerance]. Setting tolerance to zero will check for exact equality.
@@ -194,6 +206,25 @@ class Transform2D extends ChangeNotifier {
       ((point.y - m[13]) * m[0] - (point.x - m[12]) * m[1]) * det,
     );
   }
+
+  /// Whether the transform represents a pure translation, i.e. a transform of
+  /// the form `(x, y) -> (x + Δx, y + Δy)`.
+  bool get isTranslation {
+    return _angle == 0 && _scale.x == 1 && _scale.y == 1;
+  }
+
+  /// Whether the transform keeps horizontal (vertical) lines as horizontal
+  /// (vertical).
+  bool get isAxisAligned => _angle == 0;
+
+  /// Whether the transform preserves angles. A conformal transformation may
+  /// consist of a translation, rotation, and uniform scaling. A reflection is
+  /// not considered conformal.
+  bool get isConformal => _scale.x == _scale.y;
+
+  /// Whether the transform includes a reflection, i.e. it flips the orientation
+  /// of the coordinate system.
+  bool get hasReflection => _scale.x.sign * _scale.y.sign == -1;
 
   void _markAsModified() {
     _recalculate = true;

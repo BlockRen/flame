@@ -1,7 +1,7 @@
 import 'package:flame/extensions.dart';
 import 'package:flame/particles.dart';
 
-import '../flame_flare.dart';
+import 'package:flame_flare/flame_flare.dart';
 
 /// A [Particle] that renders a [FlareActorAnimation].
 class FlareParticle extends Particle {
@@ -12,9 +12,9 @@ class FlareParticle extends Particle {
 
   FlareParticle({
     required this.flareAnimation,
-    double? lifespan,
+    super.lifespan,
     required this.size,
-  }) : super(lifespan: lifespan) {
+  }) {
     flareAnimation.init();
   }
 

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
-import 'extensions/vector2.dart';
-import 'sprite_animation.dart';
+import 'package:flame/src/extensions/vector2.dart';
+import 'package:flame/src/sprite_animation.dart';
 
 /// Utility class to help extract animations and sprites from a sprite sheet
 /// image.
@@ -59,7 +59,7 @@ class SpriteSheet {
     return getSpriteById(row * columns + column);
   }
 
-  /// Gets teh sprite with id [spriteId] from the grid.
+  /// Gets the sprite with id [spriteId] from the grid.
   ///
   /// The ids are defined as starting at 0 on the top left and going
   /// sequentially on each row.

@@ -1,8 +1,7 @@
+import 'package:flame/components.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/widgets.dart' show EdgeInsets;
 import 'package:meta/meta.dart';
-
-import '../../../components.dart';
-import '../../../game.dart';
 
 /// The [HudMarginComponent] positions itself by a margin to the edge of the
 /// screen instead of by an absolute position on the screen or on the game, so
@@ -25,23 +24,16 @@ class HudMarginComponent<T extends FlameGame> extends PositionComponent
 
   HudMarginComponent({
     this.margin,
-    Vector2? position,
-    Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
-  })  : assert(
+    super.position,
+    super.size,
+    super.scale,
+    super.angle,
+    super.anchor,
+    super.children,
+    super.priority,
+  }) : assert(
           margin != null || position != null,
           'Either margin or position must be defined',
-        ),
-        super(
-          position: position,
-          size: size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
         );
 
   @override

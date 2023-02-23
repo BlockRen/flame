@@ -1,16 +1,17 @@
 import 'dart:math';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
-import 'package:flame/geometry.dart';
 import 'package:flame/input.dart';
+import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Image, Draggable;
 
 enum Shapes { circle, rectangle, polygon }
 
 class MultipleShapesExample extends FlameGame
-    with HasCollidables, HasDraggables, FPSCounter {
+    with HasCollisionDetection, HasDraggables {
   static const description = '''
     An example with many hitboxes that move around on the screen and during
     collisions they change color depending on what it is that they have collided
@@ -24,27 +25,24 @@ class MultipleShapesExample extends FlameGame
     any direction.
   ''';
 
-  final TextPaint fpsTextPaint = TextPaint();
-
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-    final screenCollidable = ScreenCollidable();
+    add(FpsTextComponent(position: Vector2(0, size.y - 24)));
+    final screenHitbox = ScreenHitbox();
     final snowman = CollidableSnowman(
       Vector2.all(150),
-      Vector2(100, 200),
+      Vector2(120, 250),
       Vector2(-100, 100),
-      screenCollidable,
+      screenHitbox,
     );
     MyCollidable lastToAdd = snowman;
-    add(screenCollidable);
+    add(screenHitbox);
     add(snowman);
     var totalAdded = 1;
-    while (totalAdded < 20) {
-      lastToAdd = nextRandomCollidable(lastToAdd, screenCollidable);
-      final lastBottomRight =
-          lastToAdd.toAbsoluteRect().bottomRight.toVector2();
-      if (lastBottomRight.x < size.x && lastBottomRight.y < size.y) {
+    while (totalAdded < 1000) {
+      lastToAdd = nextRandomCollidable(lastToAdd, screenHitbox);
+      final lastBottomRight = lastToAdd.toAbsoluteRect().bottomRight;
+      if (lastBottomRight.dx < size.x && lastBottomRight.dy < size.y) {
         add(lastToAdd);
         totalAdded++;
       } else {
@@ -58,7 +56,7 @@ class MultipleShapesExample extends FlameGame
 
   MyCollidable nextRandomCollidable(
     MyCollidable lastCollidable,
-    ScreenCollidable screenCollidable,
+    ScreenHitbox screenHitbox,
   ) {
     final collidableSize = Vector2.all(50) + Vector2.random(_rng) * 100;
     final isXOverflow = lastCollidable.position.x +
@@ -76,50 +74,43 @@ class MultipleShapesExample extends FlameGame
       position,
       collidableSize,
       velocity,
-      screenCollidable,
+      screenHitbox,
       rng: _rng,
-    );
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    fpsTextPaint.render(
-      canvas,
-      '${fps(120).toStringAsFixed(2)}fps',
-      Vector2(0, size.y - 24),
     );
   }
 }
 
 abstract class MyCollidable extends PositionComponent
-    with Draggable, HasHitboxes, Collidable {
+    with Draggable, CollisionCallbacks, GestureHitboxes {
   double rotationSpeed = 0.0;
   final Vector2 velocity;
   final delta = Vector2.zero();
   double angleDelta = 0;
-  bool _isDragged = false;
-  late final Paint _activePaint;
   final Color _defaultColor = Colors.blue.withOpacity(0.8);
-  final Set<Collidable> _activeCollisions = {};
-  final ScreenCollidable screenCollidable;
+  final Color _collisionColor = Colors.green.withOpacity(0.8);
+  late final Paint _dragIndicatorPaint;
+  final ScreenHitbox screenHitbox;
+  ShapeHitbox? hitbox;
 
   MyCollidable(
     Vector2 position,
     Vector2 size,
     this.velocity,
-    this.screenCollidable,
-  ) : super(position: position, size: size, anchor: Anchor.center);
+    this.screenHitbox,
+  ) : super(position: position, size: size, anchor: Anchor.center) {
+    _dragIndicatorPaint = BasicPalette.white.paint();
+  }
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    _activePaint = Paint()..color = _defaultColor;
+  void onMount() {
+    hitbox?.paint.color = _defaultColor;
+    super.onMount();
   }
 
   @override
   void update(double dt) {
-    if (_isDragged) {
+    super.update(dt);
+    if (isDragged) {
       return;
     }
     delta.setFrom(velocity * dt);
@@ -130,65 +121,41 @@ abstract class MyCollidable extends PositionComponent
     final topLeft = absoluteCenter - (scaledSize / 2);
     if (topLeft.x + scaledSize.x < 0 ||
         topLeft.y + scaledSize.y < 0 ||
-        topLeft.x > screenCollidable.scaledSize.x ||
-        topLeft.y > screenCollidable.scaledSize.y) {
-      final moduloSize = screenCollidable.scaledSize + scaledSize;
+        topLeft.x > screenHitbox.scaledSize.x ||
+        topLeft.y > screenHitbox.scaledSize.y) {
+      final moduloSize = screenHitbox.scaledSize + scaledSize;
       topLeftPosition = topLeftPosition % moduloSize;
     }
   }
 
   @override
   void render(Canvas canvas) {
-    renderHitboxes(canvas, paint: _activePaint);
-    if (_isDragged) {
-      final localCenter = (scaledSize / 2).toOffset();
-      canvas.drawCircle(localCenter, 5, _activePaint);
+    if (isDragged) {
+      final localCenter = scaledSize.toOffset() / 2;
+      canvas.drawCircle(localCenter, 5, _dragIndicatorPaint);
     }
   }
 
   @override
-  void onCollision(Set<Vector2> intersectionPoints, Collidable other) {
-    final isNew = _activeCollisions.add(other);
-    if (isNew) {
-      _activePaint.color = collisionColor(other).withOpacity(0.8);
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    super.onCollisionStart(intersectionPoints, other);
+    hitbox?.paint.color = _collisionColor;
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+    if (!isColliding) {
+      hitbox?.paint.color = _defaultColor;
     }
   }
 
   @override
-  void onCollisionEnd(Collidable other) {
-    _activeCollisions.remove(other);
-    if (_activeCollisions.isEmpty) {
-      _activePaint.color = _defaultColor;
-    }
-  }
-
-  Color collisionColor(Collidable other) {
-    switch (other.runtimeType) {
-      case ScreenCollidable:
-        return Colors.teal;
-      case CollidablePolygon:
-        return Colors.deepOrange;
-      case CollidableCircle:
-        return Colors.green;
-      case CollidableRectangle:
-        return Colors.cyan;
-      case CollidableSnowman:
-        return Colors.amber;
-      default:
-        return Colors.pink;
-    }
-  }
-
-  @override
-  bool onDragUpdate(int pointerId, _) {
-    _isDragged = true;
-    return true;
-  }
-
-  @override
-  bool onDragEnd(int pointerId, DragEndInfo info) {
+  bool onDragEnd(DragEndInfo info) {
     velocity.setFrom(info.velocity / 10);
-    _isDragged = false;
     return true;
   }
 }
@@ -198,64 +165,77 @@ class CollidablePolygon extends MyCollidable {
     Vector2 position,
     Vector2 size,
     Vector2 velocity,
-    ScreenCollidable screenCollidable,
-  ) : super(position, size, velocity, screenCollidable) {
-    final hitbox = HitboxPolygon([
-      Vector2(-1.0, 0.0),
-      Vector2(-0.8, 0.6),
-      Vector2(0.0, 1.0),
-      Vector2(0.6, 0.9),
-      Vector2(1.0, 0.0),
-      Vector2(0.6, -0.8),
-      Vector2(0, -1.0),
-      Vector2(-0.8, -0.8),
-    ]);
-    addHitbox(hitbox);
+    ScreenHitbox screenHitbox,
+  ) : super(position, size, velocity, screenHitbox) {
+    hitbox = PolygonHitbox.relative(
+      [
+        Vector2(-1.0, 0.0),
+        Vector2(-0.8, 0.6),
+        Vector2(0.0, 1.0),
+        Vector2(0.6, 0.9),
+        Vector2(1.0, 0.0),
+        Vector2(0.6, -0.8),
+        Vector2(0, -1.0),
+        Vector2(-0.8, -0.8),
+      ],
+      parentSize: size,
+    )..renderShape = true;
+    add(hitbox!);
   }
 }
 
 class CollidableRectangle extends MyCollidable {
   CollidableRectangle(
-    Vector2 position,
-    Vector2 size,
-    Vector2 velocity,
-    ScreenCollidable screenCollidable,
-  ) : super(position, size, velocity, screenCollidable) {
-    addHitbox(HitboxRectangle());
+    super.position,
+    super.size,
+    super.velocity,
+    super.screenHitbox,
+  ) {
+    hitbox = RectangleHitbox()..renderShape = true;
+    add(hitbox!);
   }
 }
 
 class CollidableCircle extends MyCollidable {
   CollidableCircle(
-    Vector2 position,
-    Vector2 size,
-    Vector2 velocity,
-    ScreenCollidable screenCollidable,
-  ) : super(position, size, velocity, screenCollidable) {
-    addHitbox(HitboxCircle());
+    super.position,
+    super.size,
+    super.velocity,
+    super.screenHitbox,
+  ) {
+    hitbox = CircleHitbox()..renderShape = true;
+    add(hitbox!);
   }
 }
 
-class SnowmanPart extends HitboxCircle {
-  final startColor = Colors.blue.withOpacity(0.8);
-  final hitPaint = Paint();
+class SnowmanPart extends CircleHitbox {
+  @override
+  final renderShape = true;
+  final startColor = Colors.white.withOpacity(0.8);
+  final Color hitColor;
 
-  SnowmanPart(double definition, Vector2 relativeOffset, Color hitColor)
-      : super(normalizedRadius: definition) {
-    this.relativeOffset.setFrom(relativeOffset);
-    hitPaint.color = startColor;
-    onCollision = (Set<Vector2> intersectionPoints, HitboxShape other) {
-      if (other.component is ScreenCollidable) {
-        hitPaint.color = startColor;
-      } else {
-        hitPaint.color = hitColor.withOpacity(0.8);
-      }
-    };
+  SnowmanPart(double radius, Vector2 position, this.hitColor)
+      : super(radius: radius, position: position, anchor: Anchor.center) {
+    paint.color = startColor;
   }
 
   @override
-  void render(Canvas canvas, _) {
-    super.render(canvas, hitPaint);
+  void onCollisionStart(Set<Vector2> intersectionPoints, ShapeHitbox other) {
+    super.onCollisionStart(intersectionPoints, other);
+
+    if (other.hitboxParent is ScreenHitbox) {
+      paint.color = startColor;
+    } else {
+      paint.color = hitColor.withOpacity(0.8);
+    }
+  }
+
+  @override
+  void onCollisionEnd(ShapeHitbox other) {
+    super.onCollisionEnd(other);
+    if (!isColliding) {
+      paint.color = startColor;
+    }
   }
 }
 
@@ -264,24 +244,28 @@ class CollidableSnowman extends MyCollidable {
     Vector2 position,
     Vector2 size,
     Vector2 velocity,
-    ScreenCollidable screenCollidable,
-  ) : super(position, size, velocity, screenCollidable) {
+    ScreenHitbox screenHitbox,
+  ) : super(position, size, velocity, screenHitbox) {
     rotationSpeed = 0.3;
     anchor = Anchor.topLeft;
-    final top = SnowmanPart(0.4, Vector2(0, -0.8), Colors.red);
-    final middle = SnowmanPart(0.6, Vector2(0, -0.3), Colors.yellow);
-    final bottom = SnowmanPart(1.0, Vector2(0, 0.5), Colors.green);
-    addHitbox(top);
-    addHitbox(middle);
-    addHitbox(bottom);
-    add(
-      randomCollidable(
-        Vector2(size.x / 2, size.y * 0.75),
-        size / 4,
-        Vector2.zero(),
-        screenCollidable,
-      ),
+    final top = SnowmanPart(
+      size.x * 0.3,
+      Vector2(size.x / 2, size.y * 0.15),
+      Colors.red,
     );
+    final middle = SnowmanPart(
+      size.x * 0.4,
+      Vector2(size.x / 2, size.y * 0.40),
+      Colors.yellow,
+    );
+    final bottom = SnowmanPart(
+      size.x / 2,
+      Vector2(size.x / 2, size.y - size.y / 4),
+      Colors.green,
+    );
+    add(bottom);
+    add(middle);
+    add(top);
   }
 }
 
@@ -289,7 +273,7 @@ MyCollidable randomCollidable(
   Vector2 position,
   Vector2 size,
   Vector2 velocity,
-  ScreenCollidable screenCollidable, {
+  ScreenHitbox screenHitbox, {
   Random? rng,
 }) {
   final _rng = rng ?? Random();
@@ -297,13 +281,13 @@ MyCollidable randomCollidable(
   final shapeType = Shapes.values[_rng.nextInt(Shapes.values.length)];
   switch (shapeType) {
     case Shapes.circle:
-      return CollidableCircle(position, size, velocity, screenCollidable)
+      return CollidableCircle(position, size, velocity, screenHitbox)
         ..rotationSpeed = rotationSpeed;
     case Shapes.rectangle:
-      return CollidableRectangle(position, size, velocity, screenCollidable)
+      return CollidableRectangle(position, size, velocity, screenHitbox)
         ..rotationSpeed = rotationSpeed;
     case Shapes.polygon:
-      return CollidablePolygon(position, size, velocity, screenCollidable)
+      return CollidablePolygon(position, size, velocity, screenHitbox)
         ..rotationSpeed = rotationSpeed;
   }
 }

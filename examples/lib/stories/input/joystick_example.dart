@@ -1,9 +1,8 @@
+import 'package:examples/stories/input/joystick_player.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/painting.dart';
-
-import 'joystick_player.dart';
 
 class JoystickExample extends FlameGame with HasDraggables {
   static const String description = '''
@@ -17,7 +16,6 @@ class JoystickExample extends FlameGame with HasDraggables {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final knobPaint = BasicPalette.blue.withAlpha(200).paint();
     final backgroundPaint = BasicPalette.blue.withAlpha(100).paint();
     joystick = JoystickComponent(

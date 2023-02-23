@@ -1,9 +1,9 @@
 import 'dart:math';
-import 'package:flutter/widgets.dart';
 
-import '../../extensions.dart';
-import '../anchor.dart';
-import '../sprite.dart';
+import 'package:flame/extensions.dart';
+import 'package:flame/src/anchor.dart';
+import 'package:flame/src/sprite.dart';
+import 'package:flutter/widgets.dart';
 
 class SpritePainter extends CustomPainter {
   final Sprite _sprite;
@@ -31,10 +31,15 @@ class SpritePainter extends CustomPainter {
     final spriteAnchorPosition = anchorPosition..multiply(paintSize);
 
     canvas.translateVector(boxAnchorPosition..sub(spriteAnchorPosition));
-    canvas.renderRotated(
-      _angle,
-      spriteAnchorPosition,
-      (canvas) => _sprite.render(canvas, size: paintSize),
-    );
+
+    if (_angle == 0) {
+      _sprite.render(canvas, size: paintSize);
+    } else {
+      canvas.renderRotated(
+        _angle,
+        spriteAnchorPosition,
+        (canvas) => _sprite.render(canvas, size: paintSize),
+      );
+    }
   }
 }

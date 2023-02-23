@@ -1,11 +1,12 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/animation.dart';
 
 class ScaleEffectExample extends FlameGame with TapDetector {
   static const String description = '''
@@ -20,7 +21,6 @@ class ScaleEffectExample extends FlameGame with TapDetector {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     square = RectangleComponent.square(
       size: 100,
       position: Vector2.all(200),

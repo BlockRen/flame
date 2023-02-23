@@ -1,6 +1,5 @@
+import 'package:examples/commons/ember.dart';
 import 'package:flame/game.dart';
-
-import '../../commons/ember.dart';
 
 class FlipSpriteExample extends FlameGame {
   static const String description = '''
@@ -10,8 +9,6 @@ class FlipSpriteExample extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-
     final regular = Ember(position: Vector2(size.x / 2 - 100, 200));
     add(regular);
 

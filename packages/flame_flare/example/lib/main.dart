@@ -19,12 +19,8 @@ class MyGame extends FlameGame with TapDetector, DoubleTapDetector {
 
   late final MinionComponent minionComponent;
 
-  bool loaded = false;
-
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-
     add(BGComponent());
     add(minionComponent = MinionComponent(minionController));
 

@@ -1,11 +1,12 @@
 import 'package:dashbook/dashbook.dart';
+import 'package:examples/commons/commons.dart';
+import 'package:examples/stories/camera_and_viewport/camera_component_example.dart';
+import 'package:examples/stories/camera_and_viewport/camera_component_properties_example.dart';
+import 'package:examples/stories/camera_and_viewport/coordinate_systems_example.dart';
+import 'package:examples/stories/camera_and_viewport/fixed_resolution_example.dart';
+import 'package:examples/stories/camera_and_viewport/follow_component_example.dart';
+import 'package:examples/stories/camera_and_viewport/zoom_example.dart';
 import 'package:flame/game.dart';
-
-import '../../commons/commons.dart';
-import 'coordinate_systems_example.dart';
-import 'fixed_resolution_example.dart';
-import 'follow_component_example.dart';
-import 'zoom_example.dart';
 
 void addCameraAndViewportStories(Dashbook dashbook) {
   dashbook.storiesOf('Camera & Viewport')
@@ -59,5 +60,19 @@ void addCameraAndViewportStories(Dashbook dashbook) {
       (context) => const CoordinateSystemsWidget(),
       codeLink: baseLink('camera_and_viewport/coordinate_systems_example.dart'),
       info: CoordinateSystemsExample.description,
+    )
+    ..add(
+      'CameraComponent',
+      (context) => GameWidget(game: CameraComponentExample()),
+      codeLink: baseLink('camera_and_viewport/camera_component_example.dart'),
+      info: CameraComponentExample.description,
+    )
+    ..add(
+      'CameraComponent properties',
+      (context) => GameWidget(game: CameraComponentPropertiesExample()),
+      codeLink: baseLink(
+        'camera_and_viewport/camera_component_properties_example.dart',
+      ),
+      info: CameraComponentPropertiesExample.description,
     );
 }

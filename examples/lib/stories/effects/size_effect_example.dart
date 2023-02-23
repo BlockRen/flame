@@ -15,36 +15,29 @@ class SizeEffectExample extends FlameGame with TapDetector {
     down, depending on its current state.
   ''';
 
-  late RectangleComponent square;
+  late Component shape;
   bool grow = true;
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-    square = RectangleComponent.square(
-      size: 100,
+    shape = CircleComponent(
+      radius: 100,
       position: Vector2.all(200),
       paint: BasicPalette.white.paint()..style = PaintingStyle.stroke,
-    );
-    final childSquare = RectangleComponent.square(
-      position: Vector2.all(70),
-      size: 20,
-    );
-    square.add(childSquare);
-    add(square);
+      children: [
+        RectangleComponent.square(position: Vector2.all(70), size: 20),
+      ],
+    )..addToParent(this);
   }
 
   @override
   void onTap() {
-    final s = grow ? 300.0 : 100.0;
-
-    grow = !grow;
-
-    square.add(
+    shape.add(
       SizeEffect.to(
-        Vector2.all(s),
+        Vector2.all(grow ? 300.0 : 100.0),
         EffectController(duration: 1.5, curve: Curves.bounceInOut),
       ),
     );
+    grow = !grow;
   }
 }

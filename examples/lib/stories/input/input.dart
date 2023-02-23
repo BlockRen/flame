@@ -1,20 +1,23 @@
 import 'package:dashbook/dashbook.dart';
+import 'package:examples/commons/commons.dart';
+import 'package:examples/stories/input/double_tap_callbacks_example.dart';
+import 'package:examples/stories/input/draggables_example.dart';
+import 'package:examples/stories/input/gesture_hitboxes_example.dart';
+import 'package:examples/stories/input/hardware_keyboard_example.dart';
+import 'package:examples/stories/input/hoverables_example.dart';
+import 'package:examples/stories/input/joystick_advanced_example.dart';
+import 'package:examples/stories/input/joystick_example.dart';
+import 'package:examples/stories/input/keyboard_example.dart';
+import 'package:examples/stories/input/keyboard_listener_component_example.dart';
+import 'package:examples/stories/input/mouse_cursor_example.dart';
+import 'package:examples/stories/input/mouse_movement_example.dart';
+import 'package:examples/stories/input/multitap_advanced_example.dart';
+import 'package:examples/stories/input/multitap_example.dart';
+import 'package:examples/stories/input/overlapping_tappables_example.dart';
+import 'package:examples/stories/input/scroll_example.dart';
+import 'package:examples/stories/input/tappables_example.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-
-import '../../commons/commons.dart';
-import 'draggables_example.dart';
-import 'hoverables_example.dart';
-import 'joystick_advanced_example.dart';
-import 'joystick_example.dart';
-import 'keyboard_example.dart';
-import 'mouse_cursor_example.dart';
-import 'mouse_movement_example.dart';
-import 'multitap_advanced_example.dart';
-import 'multitap_example.dart';
-import 'overlapping_tappables_example.dart';
-import 'scroll_example.dart';
-import 'tappables_example.dart';
 
 void addInputStories(Dashbook dashbook) {
   dashbook.storiesOf('Input')
@@ -37,6 +40,16 @@ void addInputStories(Dashbook dashbook) {
       info: DraggablesExample.description,
     )
     ..add(
+      'Double Tap (Component)',
+      (context) {
+        return GameWidget(
+          game: DoubleTapCallbacksExample(),
+        );
+      },
+      codeLink: baseLink('input/draggables_example.dart'),
+      info: DoubleTapCallbacksExample.description,
+    )
+    ..add(
       'Hoverables',
       (_) => GameWidget(game: HoverablesExample()),
       codeLink: baseLink('input/hoverables_example.dart'),
@@ -47,6 +60,18 @@ void addInputStories(Dashbook dashbook) {
       (_) => GameWidget(game: KeyboardExample()),
       codeLink: baseLink('input/keyboard_example.dart'),
       info: KeyboardExample.description,
+    )
+    ..add(
+      'Keyboard (Component)',
+      (_) => GameWidget(game: KeyboardListenerComponentExample()),
+      codeLink: baseLink('input/keyboard_listener_component_example.dart'),
+      info: KeyboardListenerComponentExample.description,
+    )
+    ..add(
+      'Hardware Keyboard',
+      (_) => GameWidget(game: HardwareKeyboardExample()),
+      codeLink: baseLink('input/hardware_keyboard_example.dart'),
+      info: HardwareKeyboardExample.description,
     )
     ..add(
       'Mouse Movement',
@@ -86,6 +111,12 @@ void addInputStories(Dashbook dashbook) {
       (_) => GameWidget(game: OverlappingTappablesExample()),
       codeLink: baseLink('input/overlapping_tappables_example.dart'),
       info: OverlappingTappablesExample.description,
+    )
+    ..add(
+      'Gesture Hitboxes',
+      (_) => GameWidget(game: GestureHitboxesExample()),
+      codeLink: baseLink('input/gesture_hitboxes_example.dart'),
+      info: GestureHitboxesExample.description,
     )
     ..add(
       'Joystick',

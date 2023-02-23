@@ -1,9 +1,7 @@
+import 'package:flame/components.dart';
+import 'package:flame/src/game/mixins/has_hoverables.dart';
+import 'package:flame/src/gestures/events.dart';
 import 'package:meta/meta.dart';
-
-import '../../../components.dart';
-import '../../../game.dart';
-import '../../game/flame_game.dart';
-import '../../gestures/events.dart';
 
 mixin Hoverable on Component {
   bool _isHovered = false;
@@ -34,22 +32,12 @@ mixin Hoverable on Component {
 
   @override
   @mustCallSuper
-  void prepare(Component component) {
-    super.prepare(component);
-    if (isPrepared) {
-      final parentGame = findParent<FlameGame>();
-      assert(
-        parentGame is HasHoverables,
-        'Hoverable Components can only be added to a FlameGame with '
-        'HasHoverables',
-      );
-    }
-  }
-}
-
-mixin HasHoverables on FlameGame {
-  @mustCallSuper
-  void onMouseMove(PointerHoverInfo info) {
-    propagateToChildren<Hoverable>((c) => c.handleMouseMovement(info));
+  void onMount() {
+    super.onMount();
+    assert(
+      findGame()! is HasHoverables,
+      'Hoverable Components can only be added to a FlameGame with '
+      'HasHoverables',
+    );
   }
 }

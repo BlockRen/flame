@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import '../../particles/particle.dart';
+import 'package:flame/src/particles/particle.dart';
 
 /// Implements basic behavior for nesting [Particle] instances
 /// into each other.
@@ -10,7 +10,7 @@ import '../../particles/particle.dart';
 ///   Particle child;
 ///
 ///   BehaviorParticle({
-///     @required this.child
+///     required this.child
 ///   });
 ///
 ///   @override

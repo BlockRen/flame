@@ -1,4 +1,4 @@
-import 'package:flame/assets.dart';
+import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
@@ -17,7 +17,6 @@ class _ParallaxGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     parallaxComponent = await loadParallaxComponent(
       [],
       size: parallaxSize,
@@ -48,7 +47,6 @@ class _SlowLoadParallaxGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final mockImageCache = MockImages();
 
     void createMockAnswer(int imageNumber, int time) {
@@ -82,12 +80,10 @@ class _SlowLoadParallaxGame extends FlameGame {
 }
 
 void main() {
-  final parallaxGame = FlameTester(() => _ParallaxGame());
-  final slowLoadParallaxGame = FlameTester(() => _SlowLoadParallaxGame());
-
   group('parallax test', () {
-    parallaxGame.test(
+    testWithGame<_ParallaxGame>(
       'can have non-fullscreen ParallaxComponent',
+      _ParallaxGame.new,
       (game) async {
         final parallaxSize = Vector2.all(100);
         game.onGameResize(parallaxSize);
@@ -95,12 +91,15 @@ void main() {
       },
     );
 
-    parallaxGame.test('can have fullscreen ParallaxComponent', (game) async {
+    testWithGame<_ParallaxGame>(
+        'can have fullscreen ParallaxComponent', _ParallaxGame.new,
+        (game) async {
       expect(game.parallaxComponent.size, game.size);
     });
 
-    slowLoadParallaxGame.test('can have layers with different loading times',
-        (game) async {
+    testWithGame<_SlowLoadParallaxGame>(
+        'can have layers with different loading times',
+        _SlowLoadParallaxGame.new, (game) async {
       final parallax = game.parallaxComponent.parallax!;
       var lastLength = 0.0;
       for (final layer in parallax.layers) {

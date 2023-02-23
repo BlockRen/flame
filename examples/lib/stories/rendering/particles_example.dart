@@ -8,7 +8,7 @@ import 'package:flame/sprite.dart';
 import 'package:flame/timer.dart' as flame_timer;
 import 'package:flutter/material.dart' hide Image;
 
-class ParticlesExample extends FlameGame with FPSCounter {
+class ParticlesExample extends FlameGame {
   static const String description = '''
     In this example we show how to render a lot of different particles.
   ''';
@@ -25,9 +25,6 @@ class ParticlesExample extends FlameGame with FPSCounter {
   Timer? spawnTimer;
   final StepTween steppedTween = StepTween(begin: 0, end: 5);
   final trafficLight = TrafficLightComponent();
-  final TextPaint fpsTextPaint = TextPaint(
-    style: const TextStyle(color: Colors.white),
-  );
 
   /// Defines the lifespan of all the particles in these examples
   final sceneDuration = const Duration(seconds: 1);
@@ -37,7 +34,6 @@ class ParticlesExample extends FlameGame with FPSCounter {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     await images.load('zap.png');
     await images.load('boom.png');
   }
@@ -97,8 +93,8 @@ class ParticlesExample extends FlameGame with FPSCounter {
       add(
         // Bind all the particles to a [Component] update
         // lifecycle from the [FlameGame].
-        ParticleComponent(
-          TranslatedParticle(
+        ParticleSystemComponent(
+          particle: TranslatedParticle(
             lifespan: 1,
             offset: cellCenter,
             child: particle,
@@ -182,8 +178,8 @@ class ParticlesExample extends FlameGame with FPSCounter {
     );
   }
 
-  /// Same example as above, but
-  /// with easing, utilising [CurvedParticle] extension
+  /// Same example as above, but with easing, utilizing [CurvedParticle]
+  /// extension.
   Particle easedMovingParticle() {
     return Particle.generate(
       count: 5,
@@ -263,19 +259,19 @@ class ParticlesExample extends FlameGame with FPSCounter {
   }
 
   /// Particle which is used in example below
-  Particle? reusablePatricle;
+  Particle? reusableParticle;
 
   /// A burst of white circles which actually using a single circle
   /// as a form of optimization. Look for reusing parts of particle effects
   /// whenever possible, as there are limits which are relatively easy to reach.
   Particle reuseParticles() {
-    reusablePatricle ??= circle();
+    reusableParticle ??= circle();
 
     return Particle.generate(
       generator: (i) => MovingParticle(
         curve: Interval(rnd.nextDouble() * .1, rnd.nextDouble() * .8 + .1),
         to: randomCellVector2()..scale(.5),
-        child: reusablePatricle!,
+        child: reusableParticle!,
       ),
     );
   }
@@ -407,7 +403,7 @@ class ParticlesExample extends FlameGame with FPSCounter {
   /// use of [ComputedParticle] within other particles,
   /// mixing predefined and fully custom behavior.
   Particle fireworkParticle() {
-    // A pallete to paint over the "sky"
+    // A palette to paint over the "sky"
     final paints = [
       Colors.amber,
       Colors.amberAccent,
@@ -481,22 +477,6 @@ class ParticlesExample extends FlameGame with FPSCounter {
             .accelerated(acceleration: Vector2(-5, 5)..multiply(halfCellSize)),
       ],
     );
-  }
-
-  @override
-  bool debugMode = true;
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-
-    if (debugMode) {
-      fpsTextPaint.render(
-        canvas,
-        '${fps(120).toStringAsFixed(2)}fps',
-        Vector2(0, size.y - 24),
-      );
-    }
   }
 
   /// Returns random [Vector2] within a virtual grid cell

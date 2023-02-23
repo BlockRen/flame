@@ -1,7 +1,6 @@
 import 'package:flame/components.dart';
+import 'package:flame_flare/flame_flare.dart';
 import 'package:flutter/widgets.dart';
-
-import '../flame_flare.dart';
 
 /// A [PositionComponent] that renders a [FlareActorAnimation]
 class FlareActorComponent extends PositionComponent {
@@ -9,9 +8,9 @@ class FlareActorComponent extends PositionComponent {
 
   FlareActorComponent(
     this.flareAnimation, {
-    required Vector2 size,
-    Vector2? position,
-  }) : super(position: position, size: size);
+    required Vector2 super.size,
+    super.position,
+  });
 
   @override
   void onMount() {

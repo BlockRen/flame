@@ -3,7 +3,7 @@ library flame_fire_atlas;
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
-import 'package:flame/assets.dart';
+import 'package:flame/cache.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
@@ -238,13 +238,13 @@ class FireAtlas {
       ..['id'] = id
       ..['imageData'] = imageData
       ..['selections'] = selectionsJson
-      ..['tileWidth'] = tileWidth.toDouble()
-      ..['tileHeight'] = tileHeight.toDouble();
+      ..['tileWidth'] = tileWidth
+      ..['tileHeight'] = tileHeight;
 
     return json;
   }
 
-  static FireAtlas _fromJson(Map<String, dynamic> json) {
+  factory FireAtlas._fromJson(Map<String, dynamic> json) {
     final tileHeight = json['tileHeight'] as num?;
     final tileWidth = json['tileWidth'] as num?;
     final tileSize = json['tileSize'] as num? ?? 0;
@@ -297,15 +297,17 @@ class FireAtlas {
   }
 
   /// Reads a [FireAtlas] instance from a byte array.
-  static FireAtlas deserialize(List<int> bytes) {
+  factory FireAtlas.deserialize(List<int> bytes) {
     final unzippedBytes = GZipDecoder().decodeBytes(bytes);
     final unzippedString = utf8.decode(unzippedBytes);
-    return _fromJson(jsonDecode(unzippedString) as Map<String, dynamic>);
+    return FireAtlas._fromJson(
+      jsonDecode(unzippedString) as Map<String, dynamic>,
+    );
   }
 
   Image _assertImageLoaded() {
     if (_image == null) {
-      throw 'Atlas is not loaded yet, call "load" before using it';
+      throw Exception('Atlas is not loaded yet, call "load" before using it');
     }
 
     return _image!;

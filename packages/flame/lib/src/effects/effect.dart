@@ -1,16 +1,15 @@
+import 'package:flame/components.dart';
+import 'package:flame/src/effects/controllers/effect_controller.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
-import 'controllers/effect_controller.dart';
 
 /// An [Effect] is a component that changes properties or appearance of another
 /// component over time.
 ///
-/// For example, suppose you have an object "Foo", and you want to move it
+/// For example, suppose you have an object "Goo", and you want to move it
 /// to some other point on the screen. Directly changing that object's position
 /// will cause it to teleport to the new location, which is likely undesired.
-/// A second approach that you can take is to modify Foo's `update()` method
-/// to implement the logic that will move Foo to the new position smoothly.
+/// A second approach that you can take is to modify Goo's `update()` method
+/// to implement the logic that will move Goo to the new position smoothly.
 /// However, implementing such logic for every component that you may need to
 /// move is cumbersome. A better approach then is to implement that logic as a
 /// separate "movement" component that can attach to Foo or to any other
@@ -26,7 +25,7 @@ import 'controllers/effect_controller.dart';
 /// changes in the effect's target; and also the `reset()` method if they have
 /// non-trivial internal state.
 abstract class Effect extends Component {
-  Effect(this.controller)
+  Effect(this.controller, {this.onComplete})
       : removeOnFinish = true,
         _paused = false,
         _started = false,
@@ -46,12 +45,17 @@ abstract class Effect extends Component {
   bool removeOnFinish;
 
   /// Optional callback function to be invoked once the effect completes.
-  void Function()? onFinishCallback;
+  void Function()? onComplete;
 
   /// Boolean indicators of the effect's state, their purpose is to ensure that
   /// the `onStart()` and `onFinish()` callbacks are called exactly once.
   bool _started;
   bool _finished;
+
+  /// The effect's `progress` variable as it was the last time that the
+  /// `apply()` method was called. Mostly used by the derived classes.
+  double get previousProgress => _lastProgress;
+  double _lastProgress = 0;
 
   /// Whether the effect is paused or not.
   ///
@@ -84,6 +88,7 @@ abstract class Effect extends Component {
     _paused = false;
     _started = false;
     _finished = false;
+    _lastProgress = 0;
   }
 
   @mustCallSuper
@@ -91,6 +96,7 @@ abstract class Effect extends Component {
     controller.setToEnd();
     _started = true;
     _finished = true;
+    _lastProgress = 1;
   }
 
   /// Implementation of [Component]'s `update()` method. Derived classes are
@@ -106,7 +112,9 @@ abstract class Effect extends Component {
     }
     controller.advance(dt);
     if (_started) {
-      apply(controller.progress);
+      final progress = controller.progress;
+      apply(progress);
+      _lastProgress = progress;
     }
     if (!_finished && controller.completed) {
       _finished = true;
@@ -122,13 +130,15 @@ abstract class Effect extends Component {
   /// similar to `EffectController.advance`.
   @internal
   double advance(double dt) {
-    final remainingDt = controller.advance(dt);
     if (!_started && controller.started) {
       _started = true;
       onStart();
     }
+    final remainingDt = controller.advance(dt);
     if (_started) {
-      apply(controller.progress);
+      final progress = controller.progress;
+      apply(progress);
+      _lastProgress = progress;
     }
     if (!_finished && controller.completed) {
       _finished = true;
@@ -148,7 +158,9 @@ abstract class Effect extends Component {
     }
     final remainingDt = controller.recede(dt);
     if (_started) {
-      apply(controller.progress);
+      final progress = controller.progress;
+      apply(progress);
+      _lastProgress = progress;
     }
     return remainingDt;
   }
@@ -173,7 +185,7 @@ abstract class Effect extends Component {
   /// the effect has finished again.
   @mustCallSuper
   void onFinish() {
-    onFinishCallback?.call();
+    onComplete?.call();
   }
 
   /// Apply the given [progress] level to the effect's target.

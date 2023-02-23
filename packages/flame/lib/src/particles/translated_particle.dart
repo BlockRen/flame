@@ -1,6 +1,6 @@
-import '../../extensions.dart';
-import '../components/mixins/single_child_particle.dart';
-import 'particle.dart';
+import 'package:flame/extensions.dart';
+import 'package:flame/src/components/mixins/single_child_particle.dart';
+import 'package:flame/src/particles/particle.dart';
 
 /// Statically offset given child [Particle] by given [Vector2].
 ///
@@ -14,8 +14,8 @@ class TranslatedParticle extends Particle with SingleChildParticle {
   TranslatedParticle({
     required this.child,
     required this.offset,
-    double? lifespan,
-  }) : super(lifespan: lifespan);
+    super.lifespan,
+  });
 
   @override
   void render(Canvas c) {

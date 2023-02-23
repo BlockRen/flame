@@ -1,13 +1,12 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/components/core/component_tree_root.dart';
+import 'package:flame/src/game/camera/camera.dart';
+import 'package:flame/src/game/camera/camera_wrapper.dart';
+import 'package:flame/src/game/game.dart';
+import 'package:flame/src/game/projector.dart';
 import 'package:meta/meta.dart';
-
-import '../components/component.dart';
-import '../extensions/vector2.dart';
-import 'camera/camera.dart';
-import 'camera/camera_wrapper.dart';
-import 'mixins/game.dart';
-import 'projector.dart';
 
 /// This is a more complete and opinionated implementation of [Game].
 ///
@@ -16,12 +15,23 @@ import 'projector.dart';
 ///
 /// This is the recommended base class to use for most games made with Flame.
 /// It is based on the Flame Component System (also known as FCS).
-class FlameGame extends Component with Game {
-  FlameGame({Camera? camera}) {
+class FlameGame extends ComponentTreeRoot with Game {
+  FlameGame({
+    super.children,
+    Camera? camera,
+  }) {
+    assert(
+      Component.staticGameInstance == null,
+      '$this instantiated, while another game ${Component.staticGameInstance} '
+      'declares itself to be a singleton',
+    );
     _cameraWrapper = CameraWrapper(camera ?? Camera(), children);
   }
 
   late final CameraWrapper _cameraWrapper;
+
+  @internal
+  late final List<ComponentsNotifier> notifiers = [];
 
   /// The camera translates the coordinate space after the viewport is applied.
   Camera get camera => _cameraWrapper.camera;
@@ -35,22 +45,11 @@ class FlameGame extends Component with Game {
   @override
   Vector2 get size => camera.gameSize;
 
-  /// This is the original Flutter widget size, without any transformation.
-  Vector2 get canvasSize => camera.canvasSize;
-
-  /// This method is called for every component before it is added to the
-  /// component tree.
-  /// It does preparation on a component before any update or render method is
-  /// called on it.
-  ///
-  /// You can use this to set up your mixins or pre-calculate things for
-  /// example.
-  /// By default, this calls the first [onGameResize] for every component, so
-  /// don't forget to call `super.prepareComponent` when overriding.
-  @mustCallSuper
-  void prepareComponent(Component c) {
-    // First time resize
-    c.onGameResize(size);
+  @override
+  @internal
+  void mount() {
+    super.mount();
+    setMounted();
   }
 
   /// This implementation of render renders each component, making sure the
@@ -77,14 +76,15 @@ class FlameGame extends Component with Game {
   @override
   @mustCallSuper
   void update(double dt) {
-    _cameraWrapper.update(dt);
     if (parent == null) {
       updateTree(dt);
     }
+    _cameraWrapper.update(dt);
   }
 
   @override
   void updateTree(double dt) {
+    processLifecycleEvents();
     children.updateComponentList();
     if (parent != null) {
       update(dt);
@@ -107,12 +107,36 @@ class FlameGame extends Component with Game {
   void onGameResize(Vector2 canvasSize) {
     camera.handleResize(canvasSize);
     super.onGameResize(canvasSize);
+    // [onGameResize] is declared both in [Component] and in [Game]. Since
+    // there is no way to explicitly call the [Component]'s implementation,
+    // we propagate the event to [FlameGame]'s children manually.
+    handleResize(canvasSize);
+  }
+
+  /// Ensure that all pending tree operations finish.
+  ///
+  /// This is mainly intended for testing purposes: awaiting on this future
+  /// ensures that the game is fully loaded, and that all pending operations
+  /// of adding the components into the tree are fully materialized.
+  ///
+  /// Warning: awaiting on a game that was not fully connected will result in an
+  /// infinite loop. For example, this could occur if you run `x.add(y)` but
+  /// then forget to mount `x` into the game.
+  Future<void> ready() async {
+    var repeat = true;
+    while (repeat) {
+      // Give chance to other futures to execute first
+      await Future<void>.delayed(Duration.zero);
+      repeat = false;
+      processLifecycleEvents();
+      repeat |= hasLifecycleEvents;
+    }
   }
 
   /// Whether a point is within the boundaries of the visible part of the game.
   @override
-  bool containsPoint(Vector2 p) {
-    return p.x > 0 && p.y > 0 && p.x < size.x && p.y < size.y;
+  bool containsLocalPoint(Vector2 p) {
+    return p.x >= 0 && p.y >= 0 && p.x < size.x && p.y < size.y;
   }
 
   /// Returns the current time in seconds with microseconds precision.
@@ -128,4 +152,34 @@ class FlameGame extends Component with Game {
 
   @override
   Projector get projector => camera.combinedProjector;
+
+  /// Returns a [ComponentsNotifier] for the given type [T].
+  ///
+  /// This method handles duplications, so there will never be
+  /// more than one [ComponentsNotifier] for a given type, meaning
+  /// that this method can be called as many times as needed for a type.
+  ComponentsNotifier<T> componentsNotifier<T extends Component>() {
+    for (final notifier in notifiers) {
+      if (notifier is ComponentsNotifier<T>) {
+        return notifier;
+      }
+    }
+    final notifier = ComponentsNotifier<T>(
+      descendants().whereType<T>().toList(),
+    );
+    notifiers.add(notifier);
+    return notifier;
+  }
+
+  @internal
+  void propagateToApplicableNotifiers(
+    Component component,
+    void Function(ComponentsNotifier) callback,
+  ) {
+    for (final notifier in notifiers) {
+      if (notifier.applicable(component)) {
+        callback(notifier);
+      }
+    }
+  }
 }

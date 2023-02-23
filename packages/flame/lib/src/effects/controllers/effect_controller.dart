@@ -1,16 +1,18 @@
-import 'package:flutter/animation.dart' show Curve, Curves;
+import 'dart:ui';
 
-import '../effect.dart' show Effect;
-import 'curved_effect_controller.dart';
-import 'delayed_effect_controller.dart';
-import 'infinite_effect_controller.dart';
-import 'linear_effect_controller.dart';
-import 'pause_effect_controller.dart';
-import 'repeated_effect_controller.dart';
-import 'reverse_curved_effect_controller.dart';
-import 'reverse_linear_effect_controller.dart';
-import 'sequence_effect_controller.dart';
-import 'speed_effect_controller.dart';
+import 'package:flame/src/effects/controllers/callback_controller.dart';
+import 'package:flame/src/effects/controllers/curved_effect_controller.dart';
+import 'package:flame/src/effects/controllers/delayed_effect_controller.dart';
+import 'package:flame/src/effects/controllers/infinite_effect_controller.dart';
+import 'package:flame/src/effects/controllers/linear_effect_controller.dart';
+import 'package:flame/src/effects/controllers/pause_effect_controller.dart';
+import 'package:flame/src/effects/controllers/repeated_effect_controller.dart';
+import 'package:flame/src/effects/controllers/reverse_curved_effect_controller.dart';
+import 'package:flame/src/effects/controllers/reverse_linear_effect_controller.dart';
+import 'package:flame/src/effects/controllers/sequence_effect_controller.dart';
+import 'package:flame/src/effects/controllers/speed_effect_controller.dart';
+import 'package:flame/src/effects/effect.dart' show Effect;
+import 'package:flutter/animation.dart' show Curve, Curves;
 
 /// Base "controller" class to facilitate animation of effects.
 ///
@@ -32,7 +34,7 @@ import 'speed_effect_controller.dart';
 ///   - the progress may change over a finite or infinite period of time;
 ///   - the value of 0 corresponds to the logical start of an animation;
 ///   - the value of 1 is either the end or the "peak" of an animation;
-///   - the progress may briefly attain values outside of [0; 1] range (for
+///   - the progress may briefly attain values outside of `[0; 1]` range (for
 ///     example if a "bouncy" easing curve is applied).
 ///
 /// An [EffectController] can be made to run forward in time (`advance()`), or
@@ -72,6 +74,10 @@ abstract class EffectController {
   /// If the animation is finite and there are no "backward" or "atMin" stages
   /// then the animation will complete at `progress == 1`, otherwise it will
   /// complete at `progress == 0`.
+  ///
+  /// Before [atMaxDuration] and [atMinDuration] a callback function can be
+  /// provided which will be called after the corresponding [progress] has
+  /// finished.
   factory EffectController({
     double? duration,
     double? speed,
@@ -85,6 +91,8 @@ abstract class EffectController {
     double startDelay = 0.0,
     double atMaxDuration = 0.0,
     double atMinDuration = 0.0,
+    VoidCallback? onMax,
+    VoidCallback? onMin,
   }) {
     assert(
       (duration ?? 1) >= 0,
@@ -156,6 +164,11 @@ abstract class EffectController {
       );
     }
 
+    // ON MAX CALLBACK
+    if (onMax != null) {
+      items.add(CallbackController(onMax, progress: 1.0));
+    }
+
     // AT-MAX
     if (atMaxDuration != 0) {
       items.add(PauseEffectController(atMaxDuration, progress: 1.0));
@@ -192,6 +205,11 @@ abstract class EffectController {
                 ),
         );
       }
+    }
+
+    // ON MIN CALLBACK
+    if (onMin != null) {
+      items.add(CallbackController(onMin, progress: 0.0));
     }
 
     // AT-MIN

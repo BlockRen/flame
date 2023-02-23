@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import '../image_composition.dart';
-import 'anchor.dart';
-import 'assets/images.dart';
-import 'flame.dart';
-import 'palette.dart';
+import 'package:flame/src/anchor.dart';
+import 'package:flame/src/cache/images.dart';
+import 'package:flame/src/flame.dart';
+import 'package:flame/src/image_composition.dart';
+import 'package:flame/src/palette.dart';
 
 /// A [Sprite] is a region of an [Image] that can be rendered in the Canvas.
 ///
@@ -81,6 +81,10 @@ class Sprite {
     );
   }
 
+  // Used to avoid the creation of new Vector2 objects in render.
+  static final _tmpRenderPosition = Vector2.zero();
+  static final _tmpRenderSize = Vector2.zero();
+
   /// Renders this sprite onto the [canvas].
   ///
   /// * [position]: x,y coordinates where it will be drawn; default to origin.
@@ -97,21 +101,30 @@ class Sprite {
     Anchor anchor = Anchor.topLeft,
     Paint? overridePaint,
   }) {
-    final drawPosition = position ?? Vector2.zero();
-    final drawSize = size ?? srcSize;
+    if (position != null) {
+      _tmpRenderPosition.setFrom(position);
+    } else {
+      _tmpRenderPosition.setZero();
+    }
 
-    final delta = anchor.toVector2()..multiply(drawSize);
-    final drawRect = (drawPosition + delta).toPositionedRect(drawSize);
+    _tmpRenderSize.setFrom(size ?? srcSize);
 
+    _tmpRenderPosition.setValues(
+      _tmpRenderPosition.x - (anchor.x * _tmpRenderSize.x),
+      _tmpRenderPosition.y - (anchor.y * _tmpRenderSize.y),
+    );
+
+    final drawRect = _tmpRenderPosition.toPositionedRect(_tmpRenderSize);
     final drawPaint = overridePaint ?? paint;
 
     canvas.drawImageRect(image, src, drawRect, drawPaint);
   }
 
-  /// Return a new Image based on the [src] of the Sprite.
+  /// Return a new [Image] based on the [src] of the Sprite.
   ///
   /// **Note:** This is a heavy async operation and should not be called inside
-  /// the game loop.
+  /// the game loop. Remember to call dispose on the [Image] object once you
+  /// aren't going to use it anymore.
   Future<Image> toImage() async {
     final composition = ImageComposition()
       ..add(image, Vector2.zero(), source: src);

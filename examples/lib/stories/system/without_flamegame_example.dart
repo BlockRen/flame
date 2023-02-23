@@ -4,11 +4,11 @@ import 'package:flame/palette.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-class NoFlameGameExample with Loadable, Game, KeyboardEvents {
+class NoFlameGameExample extends Game with KeyboardEvents {
   static const String description = '''
     This example showcases how to create a game without the FlameGame.
     It also briefly showcases how to act on keyboard events.
-    Usage: Use A S D F to steer the rectangle.
+    Usage: Use A W S D to steer the rectangle.
   ''';
 
   static final Paint white = BasicPalette.white.paint();

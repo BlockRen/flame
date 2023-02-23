@@ -5,7 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
-class SpritebatchLoadExample extends FlameGame {
+class SpriteBatchLoadExample extends FlameGame {
   static const String description = '''
     In this example we do the same thing as in the normal sprite batch example,
     but in this example the logic and loading is moved into a component that
@@ -14,16 +14,14 @@ class SpritebatchLoadExample extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     add(MySpriteBatchComponent());
   }
 }
 
 class MySpriteBatchComponent extends SpriteBatchComponent
-    with HasGameRef<SpritebatchLoadExample> {
+    with HasGameRef<SpriteBatchLoadExample> {
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final spriteBatch = await gameRef.loadSpriteBatch('boom.png');
     this.spriteBatch = spriteBatch;
 

@@ -5,7 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
-class SpritebatchExample extends FlameGame {
+class SpriteBatchExample extends FlameGame {
   static const String description = '''
     In this example we show how to render many sprites in a batch for
     efficiency, this is done with `SpriteBatch` and the `SpriteBatchComponent`.
@@ -13,7 +13,6 @@ class SpritebatchExample extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final spriteBatch = await SpriteBatch.load('boom.png');
 
     spriteBatch.add(

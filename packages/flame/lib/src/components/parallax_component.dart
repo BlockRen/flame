@@ -1,12 +1,11 @@
 import 'dart:async';
 
+import 'package:flame/components.dart';
+import 'package:flame/game.dart';
+import 'package:flame/src/cache/images.dart';
+import 'package:flame/src/parallax.dart';
 import 'package:flutter/painting.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
-import '../../game.dart';
-import '../assets/images.dart';
-import '../parallax.dart';
 
 extension ParallaxComponentExtension on FlameGame {
   Future<ParallaxComponent> loadParallaxComponent(
@@ -46,6 +45,9 @@ extension ParallaxComponentExtension on FlameGame {
 /// layer moves with different velocities to give an effect of depth.
 class ParallaxComponent<T extends FlameGame> extends PositionComponent
     with HasGameRef<T> {
+  @override
+  PositionType positionType = PositionType.viewport;
+
   bool isFullscreen = true;
   Parallax? _parallax;
 
@@ -58,21 +60,17 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
   /// Creates a component with an empty parallax which can be set later.
   ParallaxComponent({
     Parallax? parallax,
-    Vector2? position,
+    super.position,
     Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
+    super.scale,
+    super.angle,
+    super.anchor,
+    super.children,
+    super.priority,
   })  : _parallax = parallax,
         isFullscreen = size == null && !(parallax?.isSized ?? false),
         super(
-          position: position,
           size: size ?? ((parallax?.isSized ?? false) ? parallax?.size : null),
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
         );
 
   @mustCallSuper
@@ -87,6 +85,7 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
     parallax?.resize(newSize);
   }
 
+  @mustCallSuper
   @override
   void onMount() {
     assert(
@@ -95,6 +94,7 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
     );
   }
 
+  @mustCallSuper
   @override
   void update(double dt) {
     parallax?.update(dt);
@@ -117,8 +117,8 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
   /// Optionally arguments for the [baseVelocity] and [velocityMultiplierDelta]
   /// can be passed in, [baseVelocity] defines what the base velocity of the
   /// layers should be and [velocityMultiplierDelta] defines how the velocity
-  /// should change the closer the layer is ([velocityMultiplierDelta ^ n],
-  /// where n is the layer index).
+  /// should change the closer the layer is (`velocityMultiplierDelta ^ n`,
+  /// where `n` is the layer index).
   /// Arguments for how all the images should repeat ([repeat]),
   /// which edge it should align with ([alignment]), which axis it should fill
   /// the image on ([fill]) and [images] which is the image cache that should be

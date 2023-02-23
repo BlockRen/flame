@@ -1,12 +1,14 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/effects/provider_interfaces.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
 
 export '../sprite_animation.dart';
 
-class SpriteAnimationGroupComponent<T> extends PositionComponent with HasPaint {
+class SpriteAnimationGroupComponent<T> extends PositionComponent
+    with HasPaint
+    implements SizeProvider {
   /// Key with the current playing animation
   T? current;
 
@@ -22,21 +24,15 @@ class SpriteAnimationGroupComponent<T> extends PositionComponent with HasPaint {
     this.current,
     Map<T, bool>? removeOnFinish,
     Paint? paint,
-    Vector2? position,
-    Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
-  })  : removeOnFinish = removeOnFinish ?? const {},
-        super(
-          position: position,
-          size: size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
-        ) {
+    super.position,
+    super.size,
+    super.scale,
+    super.angle,
+    super.nativeAngle,
+    super.anchor,
+    super.children,
+    super.priority,
+  }) : removeOnFinish = removeOnFinish ?? const {} {
     if (paint != null) {
       this.paint = paint;
     }
@@ -83,18 +79,6 @@ class SpriteAnimationGroupComponent<T> extends PositionComponent with HasPaint {
 
   SpriteAnimation? get animation => animations?[current];
 
-  /// Component will be removed after animation is done and the current state
-  /// is true on [removeOnFinish].
-  ///
-  /// Note: [SpriteAnimationGroupComponent] will not be removed automatically if
-  /// loop property of [SpriteAnimation] of the current state is true.
-  @override
-  bool get shouldRemove {
-    final stateRemoveOnFinish = removeOnFinish[current] ?? false;
-    return super.shouldRemove ||
-        (stateRemoveOnFinish && (animation?.done() ?? false));
-  }
-
   @mustCallSuper
   @override
   void render(Canvas canvas) {
@@ -105,8 +89,12 @@ class SpriteAnimationGroupComponent<T> extends PositionComponent with HasPaint {
         );
   }
 
+  @mustCallSuper
   @override
   void update(double dt) {
     animation?.update(dt);
+    if ((removeOnFinish[current] ?? false) && (animation?.done() ?? false)) {
+      removeFromParent();
+    }
   }
 }

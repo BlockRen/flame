@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/game.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,7 +85,7 @@ void main() {
     });
 
     group('sequence progression', () {
-      test('simple sequence', () async {
+      testWithFlameGame('simple sequence', (game) async {
         final effect = SequenceEffect([
           MoveEffect.by(Vector2(10, 0), EffectController(duration: 1)),
           MoveEffect.by(Vector2(0, 10), EffectController(duration: 2)),
@@ -94,10 +93,8 @@ void main() {
           MoveEffect.by(Vector2(30, 30), EffectController(duration: 4)),
         ]);
         final component = PositionComponent()..add(effect);
-
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
-        game.update(0);
+        game.add(component);
+        await game.ready();
 
         // Each point here is spaced 0.1 seconds apart
         final expectedPositions = <Vector2>[
@@ -108,12 +105,12 @@ void main() {
           Vector2(30, 40),
         ];
         for (final p in expectedPositions) {
-          expect(component.position, closeToVector(p.x, p.y, epsilon: 1e-12));
+          expect(component.position, closeToVector(p, 1e-12));
           game.update(0.1);
         }
       });
 
-      test('large step', () async {
+      testWithFlameGame('large step', (game) async {
         final effect = SequenceEffect([
           MoveEffect.by(Vector2(10, 0), EffectController(duration: 1)),
           MoveEffect.by(Vector2(0, 10), EffectController(duration: 2)),
@@ -121,15 +118,14 @@ void main() {
           MoveEffect.by(Vector2(30, 30), EffectController(duration: 4)),
         ]);
         final component = PositionComponent()..add(effect);
-
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
+        game.add(component);
+        await game.ready();
 
         game.update(10);
-        expect(component.position, closeToVector(30, 40));
+        expect(component.position, closeToVector(Vector2(30, 40)));
       });
 
-      test('k-step sequence', () async {
+      testWithFlameGame('k-step sequence', (game) async {
         final effect = SequenceEffect(
           [
             MoveEffect.by(Vector2(10, 0), EffectController(duration: 1)),
@@ -138,23 +134,23 @@ void main() {
           repeatCount: 5,
         );
         final component = PositionComponent()..add(effect);
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
+        game.add(component);
+        await game.ready();
 
         for (var i = 0; i < 10; i++) {
-          final x = ((i + 1) ~/ 2) * 10;
-          final y = (i ~/ 2) * 10;
-          expect(component.position, closeToVector(x, y));
+          final x = ((i + 1) ~/ 2) * 10.0;
+          final y = (i ~/ 2) * 10.0;
+          expect(component.position, closeToVector(Vector2(x, y)));
           expect(effect.isMounted, true);
           game.update(1);
         }
         game.update(5); // Will schedule the `effect` component for deletion
         game.update(0); // Second update ensures the game deletes the component
         expect(effect.isMounted, false);
-        expect(component.position, closeToVector(50, 50));
+        expect(component.position, closeToVector(Vector2(50, 50)));
       });
 
-      test('alternating sequence', () async {
+      testWithFlameGame('alternating sequence', (game) async {
         final effect = SequenceEffect(
           [
             MoveEffect.by(Vector2(10, 0), EffectController(duration: 1)),
@@ -165,9 +161,8 @@ void main() {
         expect(effect.controller.duration, 4);
 
         final component = PositionComponent()..add(effect);
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
-        game.update(0);
+        game.add(component);
+        await game.ready();
 
         final expectedPath = <Vector2>[
           for (var i = 0.0; i < 10; i++) Vector2(i, 0),
@@ -176,14 +171,14 @@ void main() {
           for (var i = 10.0; i > 0; i--) Vector2(i, 0),
         ];
         for (final p in expectedPath) {
-          expect(component.position, closeToVector(p.x, p.y, epsilon: 1e-14));
+          expect(component.position, closeToVector(p, 1e-14));
           game.update(0.1);
         }
         game.update(0.001);
         expect(effect.controller.completed, true);
       });
 
-      test('sequence of alternates', () async {
+      testWithFlameGame('sequence of alternates', (game) async {
         EffectController controller() =>
             EffectController(duration: 1, alternate: true);
         final effect = SequenceEffect(
@@ -195,9 +190,8 @@ void main() {
         );
 
         final component = PositionComponent()..add(effect);
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
-        game.update(0);
+        game.add(component);
+        await game.ready();
 
         final forwardPath = <Vector2>[
           for (var i = 0; i < 10; i++) Vector2(i * 0.1, 0),
@@ -211,15 +205,32 @@ void main() {
           ...forwardPath.reversed,
         ];
         for (final p in expectedPath) {
-          expect(component.position, closeToVector(p.x, p.y, epsilon: 1e-14));
+          expect(component.position, closeToVector(p, 1e-14));
           game.update(0.1);
         }
         game.update(0.001);
-        expect(component.position, closeToVector(0, 0));
+        expect(component.position, closeToVector(Vector2.zero()));
         expect(effect.controller.completed, true);
       });
 
-      test('sequence in sequence', () async {
+      testWithFlameGame('with SpeedEffectController', (game) async {
+        final effect = SequenceEffect([
+          MoveEffect.to(
+            Vector2(10, 0),
+            EffectController(speed: 10.0),
+          ),
+          MoveEffect.by(
+            Vector2(10, 0),
+            EffectController(duration: 1.0),
+          ),
+        ]);
+        await game.ensureAdd(PositionComponent(children: [effect]));
+        game.update(0);
+        expect(effect.controller.duration, 2.0);
+        expect(effect.controller.completed, false);
+      });
+
+      testWithFlameGame('sequence in sequence', (game) async {
         EffectController duration(double t) => EffectController(duration: t);
         const dt = 0.01;
         const x0 = 0.0, y0 = 0.0;
@@ -254,9 +265,8 @@ void main() {
         expect(effect.controller.duration, 42);
 
         final component = PositionComponent()..add(effect);
-        final game = FlameGame()..onGameResize(Vector2.all(1000));
-        await game.ensureAdd(component);
-        game.update(0);
+        game.add(component);
+        await game.ready();
 
         // All points here are spaced `dt = 0.01` apart
         final forwardPath = <Vector2>[
@@ -298,7 +308,7 @@ void main() {
           ...forwardPath.reversed,
         ];
         for (final p in expectedPath) {
-          expect(component.position, closeToVector(p.x, p.y, epsilon: 1e-12));
+          expect(component.position, closeToVector(p, 1e-12));
           game.update(dt);
         }
         game.update(1e-5);

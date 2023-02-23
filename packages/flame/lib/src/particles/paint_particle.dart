@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import '../components/mixins/single_child_particle.dart';
-import 'curved_particle.dart';
-import 'particle.dart';
+import 'package:flame/src/components/mixins/single_child_particle.dart';
+import 'package:flame/src/particles/curved_particle.dart';
+import 'package:flame/src/particles/particle.dart';
 
 /// A particle which renders its child with certain [Paint]
 /// Could be used for applying composite effects.
@@ -25,10 +25,8 @@ class PaintParticle extends CurvedParticle with SingleChildParticle {
 
     // Reasonably large rect for most particles
     this.bounds = const Rect.fromLTRB(-50, -50, 50, 50),
-    double? lifespan,
-  }) : super(
-          lifespan: lifespan,
-        );
+    super.lifespan,
+  });
 
   @override
   void render(Canvas canvas) {

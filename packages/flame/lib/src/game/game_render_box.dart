@@ -1,20 +1,80 @@
+import 'package:flame/game.dart';
+import 'package:flame/src/game/game_loop.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart' hide WidgetBuilder;
 
-import 'game_loop.dart';
-import 'mixins/game.dart';
+/// A [RenderObjectWidget] that renders the [GameRenderBox].
+///
+/// This is the widget that is used by the [GameWidget] to ACTUALLY
+/// render the game.
+class RenderGameWidget extends LeafRenderObjectWidget {
+  final Game game;
+  final bool addRepaintBoundary;
 
-class GameRenderBox extends RenderBox with WidgetsBindingObserver {
-  BuildContext buildContext;
-  Game game;
-  GameLoop? gameLoop;
+  const RenderGameWidget({
+    super.key,
+    required this.game,
+    required this.addRepaintBoundary,
+  });
 
-  GameRenderBox(this.buildContext, this.game) {
-    WidgetsBinding.instance!.addTimingsCallback(game.onTimingsCallback);
+  @override
+  RenderBox createRenderObject(BuildContext context) {
+    return GameRenderBox(game, context, addRepaintBoundary);
   }
 
   @override
-  bool get isRepaintBoundary => true;
+  void updateRenderObject(BuildContext context, GameRenderBox renderObject) {
+    renderObject
+      ..game = game
+      ..buildContext = context
+      ..isRepaintBoundary = addRepaintBoundary;
+  }
+}
+
+class GameRenderBox extends RenderBox with WidgetsBindingObserver {
+  GameRenderBox(
+    this._game,
+    this.buildContext,
+    this._isRepaintBoundary,
+  );
+
+  GameLoop? gameLoop;
+
+  BuildContext buildContext;
+
+  Game _game;
+
+  Game get game => _game;
+
+  set game(Game value) {
+    // Identities are equal, no need to update.
+    if (_game == value) {
+      return;
+    }
+
+    if (attached) {
+      _detachGame();
+    }
+
+    _game = value;
+
+    if (attached) {
+      _attachGame(owner!);
+    }
+  }
+
+  bool _isRepaintBoundary = false;
+
+  set isRepaintBoundary(bool value) {
+    if (_isRepaintBoundary == value) {
+      return;
+    }
+    _isRepaintBoundary = value;
+    markNeedsCompositingBitsUpdate();
+  }
+
+  @override
+  bool get isRepaintBoundary => _isRepaintBoundary;
 
   @override
   bool get sizedByParent => true;
@@ -25,12 +85,13 @@ class GameRenderBox extends RenderBox with WidgetsBindingObserver {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
+    _attachGame(owner);
+  }
+
+  void _attachGame(PipelineOwner owner) {
     game.attach(owner, this);
 
     final gameLoop = this.gameLoop = GameLoop(gameLoopCallback);
-
-    game.pauseEngineFn = gameLoop.stop;
-    game.resumeEngineFn = gameLoop.start;
 
     if (!game.paused) {
       gameLoop.start();
@@ -42,6 +103,10 @@ class GameRenderBox extends RenderBox with WidgetsBindingObserver {
   @override
   void detach() {
     super.detach();
+    _detachGame();
+  }
+
+  void _detachGame() {
     game.detach();
     gameLoop?.dispose();
     gameLoop = null;
@@ -49,6 +114,7 @@ class GameRenderBox extends RenderBox with WidgetsBindingObserver {
   }
 
   void gameLoopCallback(double dt) {
+    assert(attached);
     if (!attached) {
       return;
     }
@@ -65,11 +131,11 @@ class GameRenderBox extends RenderBox with WidgetsBindingObserver {
   }
 
   void _bindLifecycleListener() {
-    WidgetsBinding.instance!.addObserver(this);
+    _ambiguate(WidgetsBinding.instance)!.addObserver(this);
   }
 
   void _unbindLifecycleListener() {
-    WidgetsBinding.instance!.removeObserver(this);
+    _ambiguate(WidgetsBinding.instance)!.removeObserver(this);
   }
 
   @override
@@ -77,3 +143,13 @@ class GameRenderBox extends RenderBox with WidgetsBindingObserver {
     game.lifecycleStateChange(state);
   }
 }
+
+/// This allows a value of type T or T?
+/// to be treated as a value of type T?.
+///
+/// We use this so that APIs that have become
+/// non-nullable can still be used with `!` and `?`
+/// to support older versions of the API as well.
+///
+/// See more: https://docs.flutter.dev/development/tools/sdk/release-notes/release-notes-3.0.0
+T? _ambiguate<T>(T? value) => value;

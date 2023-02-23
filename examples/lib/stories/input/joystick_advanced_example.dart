@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:examples/stories/input/joystick_player.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
@@ -8,10 +9,8 @@ import 'package:flame/palette.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
-import 'joystick_player.dart';
-
 class JoystickAdvancedExample extends FlameGame
-    with HasDraggables, HasTappables {
+    with HasDraggables, HasTappables, HasCollisionDetection {
   static const String description = '''
     In this example we showcase how to use the joystick by creating 
     `SpriteComponent`s that serve as the joystick's knob and background.
@@ -29,13 +28,13 @@ class JoystickAdvancedExample extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final image = await images.load('joystick.png');
     final sheet = SpriteSheet.fromColumnsAndRows(
       image: image,
       columns: 6,
       rows: 1,
     );
+    add(ScreenHitbox());
     joystick = JoystickComponent(
       knob: SpriteComponent(
         sprite: sheet.getSpriteById(1),

@@ -3,13 +3,12 @@ import 'package:flame/game.dart';
 
 class AsepriteExample extends FlameGame {
   static const String description = '''
-    This example shows how to load animations from a asprite json file and a
+    This example shows how to load animations from an Aseprite json file and a
     sprite sheet. There is no interaction on this example.
   ''';
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     final image = await images.load('animations/chopper.png');
     final jsonData = await assets.readJson('images/animations/chopper.json');
     final animation = SpriteAnimation.fromAsepriteData(image, jsonData);

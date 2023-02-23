@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import '../../../extensions.dart';
-import '../../../game.dart';
+import 'package:flame/extensions.dart';
+import 'package:flame/game.dart';
 
 /// A viewport is a class that potentially translates and resizes the screen.
 /// The reason you might want to have a viewport is to make sure you handle any
@@ -19,7 +19,8 @@ import '../../../game.dart';
 ///
 /// When using a viewport, [resize] should be called by the engine with
 /// the raw canvas size (on startup and subsequent resizes) and that will
-/// configure [getEffectiveSize()] and [getCanvasSize()].
+/// configure [effectiveSize] and [canvasSize].
+///
 /// The Viewport can also apply an offset to render and clip the canvas adding
 /// borders (clipping) when necessary.
 /// When rendering, call [render] and put all your rendering inside the lambda
@@ -126,8 +127,8 @@ class DefaultViewport extends Viewport {
 /// used it will try to adapt the best as possible.
 class FixedResolutionViewport extends Viewport {
   /// By default, this viewport will clip anything rendered outside.
-  /// Use this variable to control that behaviour.
-  bool noClip;
+  /// Use this variable to control that behavior.
+  bool clip;
 
   @override
   late Vector2 effectiveSize;
@@ -147,7 +148,7 @@ class FixedResolutionViewport extends Viewport {
   /// The Rect that is used to clip the canvas
   late Rect _clipRect;
 
-  FixedResolutionViewport(this.effectiveSize, {this.noClip = false});
+  FixedResolutionViewport(this.effectiveSize, {this.clip = true});
 
   @override
   void resize(Vector2 newCanvasSize) {
@@ -175,7 +176,7 @@ class FixedResolutionViewport extends Viewport {
 
   @override
   void apply(Canvas c) {
-    if (!noClip) {
+    if (clip) {
       c.clipRect(_clipRect);
     }
     c.transform(_transform.storage);

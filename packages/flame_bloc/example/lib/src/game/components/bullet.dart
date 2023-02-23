@@ -1,12 +1,11 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/geometry.dart';
-
-import '../../inventory/bloc/inventory_bloc.dart';
-import '../game.dart';
-import 'enemy.dart';
+import 'package:flame_bloc_example/src/game/components/enemy.dart';
+import 'package:flame_bloc_example/src/game/game.dart';
+import 'package:flame_bloc_example/src/inventory/bloc/inventory_bloc.dart';
 
 class BulletComponent extends SpriteAnimationComponent
-    with HasGameRef<SpaceShooterGame>, HasHitboxes, Collidable {
+    with HasGameRef<SpaceShooterGame>, CollisionCallbacks {
   static const bulletSpeed = -500;
 
   bool destroyed = false;
@@ -23,7 +22,7 @@ class BulletComponent extends SpriteAnimationComponent
   }) : super(position: Vector2(x, y)) {
     size = Vector2(_mapWidth(), 20);
 
-    addHitbox(HitboxRectangle());
+    add(RectangleHitbox());
   }
 
   double _mapWidth() {
@@ -71,7 +70,8 @@ class BulletComponent extends SpriteAnimationComponent
   }
 
   @override
-  void onCollision(Set<Vector2> points, Collidable other) {
+  void onCollision(Set<Vector2> points, PositionComponent other) {
+    super.onCollision(points, other);
     if (other is EnemyComponent) {
       destroyed = true;
       other.takeHit();
@@ -80,11 +80,14 @@ class BulletComponent extends SpriteAnimationComponent
 
   @override
   void update(double dt) {
+    super.update(dt);
     y += bulletSpeed * dt;
     if (xDirection != 0) {
       x += bulletSpeed * dt * xDirection;
     }
 
-    shouldRemove = destroyed || toRect().bottom <= 0;
+    if (destroyed || toRect().bottom <= 0) {
+      removeFromParent();
+    }
   }
 }

@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui';
 
-import '../components/mixins/single_child_particle.dart';
-import 'curved_particle.dart';
-import 'particle.dart';
+import 'package:flame/src/components/mixins/single_child_particle.dart';
+import 'package:flame/src/particles/curved_particle.dart';
+import 'package:flame/src/particles/particle.dart';
 
 /// A particle which rotates its child over the lifespan
 /// between two given bounds in radians
@@ -18,10 +18,8 @@ class RotatingParticle extends CurvedParticle with SingleChildParticle {
     required this.child,
     this.from = 0,
     this.to = 2 * pi,
-    double? lifespan,
-  }) : super(
-          lifespan: lifespan,
-        );
+    super.lifespan,
+  });
 
   double get angle => lerpDouble(from, to, progress) ?? 0;
 

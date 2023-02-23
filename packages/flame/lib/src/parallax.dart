@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:flame/cache.dart';
+import 'package:flame/extensions.dart';
+import 'package:flame/game.dart';
+import 'package:flame/src/flame.dart';
+import 'package:flame/src/sprite_animation.dart';
 import 'package:flutter/painting.dart';
-
-import '../game.dart';
-import 'assets/images.dart';
-import 'extensions/canvas.dart';
-import 'extensions/image.dart';
-import 'flame.dart';
-import 'sprite_animation.dart';
 
 extension ParallaxExtension on Game {
   Future<Parallax> loadParallax(
@@ -52,14 +50,14 @@ extension ParallaxExtension on Game {
 
   Future<ParallaxAnimation> loadParallaxAnimation(
     String path,
-    SpriteAnimationData animaitonData, {
+    SpriteAnimationData animationData, {
     ImageRepeat repeat = ImageRepeat.repeatX,
     Alignment alignment = Alignment.bottomLeft,
     LayerFill fill = LayerFill.height,
   }) {
     return ParallaxAnimation.load(
       path,
-      animaitonData,
+      animationData,
       repeat: repeat,
       alignment: alignment,
       fill: fill,
@@ -119,16 +117,11 @@ class ParallaxImage extends ParallaxRenderer {
 
   ParallaxImage(
     this._image, {
-    ImageRepeat? repeat,
-    Alignment? alignment,
-    LayerFill? fill,
-    FilterQuality? filterQuality,
-  }) : super(
-          repeat: repeat,
-          alignment: alignment,
-          fill: fill,
-          filterQuality: filterQuality,
-        );
+    super.repeat,
+    super.alignment,
+    super.fill,
+    super.filterQuality,
+  });
 
   /// Takes a path of an image, and optionally arguments for how the image
   /// should repeat ([repeat]), which edge it should align with ([alignment]),
@@ -174,14 +167,10 @@ class ParallaxAnimation extends ParallaxRenderer {
   ParallaxAnimation(
     this._animation,
     this._prerenderedFrames, {
-    ImageRepeat? repeat,
-    Alignment? alignment,
-    LayerFill? fill,
-  }) : super(
-          repeat: repeat,
-          alignment: alignment,
-          fill: fill,
-        );
+    super.repeat,
+    super.alignment,
+    super.fill,
+  });
 
   /// Takes a path of an image, a SpriteAnimationData, and optionally arguments
   /// for how the image should repeat ([repeat]), which edge it should align
@@ -206,13 +195,13 @@ class ParallaxAnimation extends ParallaxRenderer {
 
     final animation =
         await SpriteAnimation.load(path, animationData, images: images);
-    final prerendedFrames = await Future.wait(
+    final prerenderedFrames = await Future.wait(
       animation.frames.map((frame) => frame.sprite.toImage()).toList(),
     );
 
     return ParallaxAnimation(
       animation,
-      prerendedFrames,
+      prerenderedFrames,
       repeat: repeat,
       alignment: alignment,
       fill: fill,
@@ -478,8 +467,8 @@ class Parallax {
   /// Optionally arguments for the [baseVelocity] and [velocityMultiplierDelta]
   /// can be passed in, [baseVelocity] defines what the base velocity of the
   /// layers should be and [velocityMultiplierDelta] defines how the velocity
-  /// should change the closer the layer is ([velocityMultiplierDelta ^ n],
-  /// where n is the layer index).
+  /// should change the closer the layer is (`velocityMultiplierDelta ^ n`,
+  /// where `n` is the layer index).
   /// Arguments for how all the images should repeat ([repeat]),
   /// which edge it should align with ([alignment]), which axis it should fill
   /// the image on ([fill]) and [images] which is the image cache that should be

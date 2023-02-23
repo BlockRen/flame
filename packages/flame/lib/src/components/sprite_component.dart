@@ -1,9 +1,9 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/effects/provider_interfaces.dart';
+import 'package:flame/src/extensions/image.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
-import '../extensions/image.dart';
 
 export '../sprite.dart';
 
@@ -12,7 +12,9 @@ export '../sprite.dart';
 /// angle.
 ///
 /// This a commonly used subclass of [Component].
-class SpriteComponent extends PositionComponent with HasPaint {
+class SpriteComponent extends PositionComponent
+    with HasPaint
+    implements SizeProvider {
   /// The [sprite] to be rendered by this component.
   Sprite? sprite;
 
@@ -20,19 +22,16 @@ class SpriteComponent extends PositionComponent with HasPaint {
   SpriteComponent({
     this.sprite,
     Paint? paint,
-    Vector2? position,
+    super.position,
     Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
+    super.scale,
+    super.angle,
+    super.nativeAngle,
+    super.anchor,
+    super.children,
+    super.priority,
   }) : super(
-          position: position,
           size: size ?? sprite?.srcSize,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
         ) {
     if (paint != null) {
       this.paint = paint;
@@ -49,6 +48,7 @@ class SpriteComponent extends PositionComponent with HasPaint {
     Vector2? scale,
     double? angle,
     Anchor? anchor,
+    Iterable<Component>? children,
     int? priority,
   }) : this(
           sprite: Sprite(
@@ -62,6 +62,7 @@ class SpriteComponent extends PositionComponent with HasPaint {
           scale: scale,
           angle: angle,
           anchor: anchor,
+          children: children,
           priority: priority,
         );
 

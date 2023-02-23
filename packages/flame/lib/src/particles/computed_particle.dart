@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'particle.dart';
+import 'package:flame/src/particles/particle.dart';
 
 /// A function which should render desired contents
 /// onto a given canvas. External state needed for
@@ -16,10 +16,8 @@ class ComputedParticle extends Particle {
 
   ComputedParticle({
     required this.renderer,
-    double? lifespan,
-  }) : super(
-          lifespan: lifespan,
-        );
+    super.lifespan,
+  });
 
   @override
   void render(Canvas canvas) {

@@ -1,11 +1,9 @@
 import 'dart:ui';
 
-import '../anchor.dart';
-import '../extensions/vector2.dart';
-import '../sprite_animation.dart';
-import 'particle.dart';
-
-export '../sprite_animation.dart';
+import 'package:flame/src/anchor.dart';
+import 'package:flame/src/extensions/vector2.dart';
+import 'package:flame/src/particles/particle.dart';
+import 'package:flame/src/sprite_animation.dart';
 
 export '../sprite_animation.dart';
 
@@ -19,11 +17,9 @@ class SpriteAnimationParticle extends Particle {
     required this.animation,
     this.size,
     this.overridePaint,
-    double? lifespan,
+    super.lifespan,
     this.alignAnimationTime = true,
-  }) : super(
-          lifespan: lifespan,
-        );
+  });
 
   @override
   void setLifespan(double lifespan) {

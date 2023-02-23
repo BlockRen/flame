@@ -1,8 +1,8 @@
+import 'dart:ui';
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 // This class only has `HasDraggables` since the game-in-game example moves a
 // draggable component to this game.
@@ -20,7 +20,6 @@ class ComposabilityExample extends FlameGame with HasDraggables {
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
     parentSquare = ParentSquare(Vector2.all(200), Vector2.all(300))
       ..anchor = Anchor.center;
     add(parentSquare);
@@ -46,7 +45,6 @@ class ParentSquare extends RectangleComponent with HasGameRef {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
     createChildren();
   }
 

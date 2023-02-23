@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'color.dart';
+import 'package:flame/src/extensions/color.dart';
 
 export 'dart:ui' show Color;
 
@@ -42,6 +42,9 @@ extension PaintExtension on Paint {
     return Paint()..color = color;
   }
 
+  // used as an example hex color code on the documentation below
+  // cSpell:ignore fccc
+
   /// Parses an ARGB color from a valid hex string (e.g. #1C1C1C).
   ///
   /// The `#` is optional.
@@ -65,7 +68,7 @@ extension PaintExtension on Paint {
   /// You can pass in a random number generator [rng], if omitted the function
   /// will create a new [Random] object without a seed and use that.
   /// [base] can be used to get the random colors in only a lighter spectrum, it
-  /// should be between [0-256].
+  /// should be between 0 and 256.
   static Paint random({
     double withAlpha = 1.0,
     int base = 0,

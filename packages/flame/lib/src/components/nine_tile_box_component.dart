@@ -1,13 +1,13 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/effects/provider_interfaces.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
 
 export '../nine_tile_box.dart';
 
 /// This class is a thin wrapper on top of [NineTileBox] as a component.
-class NineTileBoxComponent extends PositionComponent {
+class NineTileBoxComponent extends PositionComponent implements SizeProvider {
   NineTileBox? nineTileBox;
 
   /// Takes the [NineTileBox] instance to render a box that can grow and shrink
@@ -17,20 +17,14 @@ class NineTileBoxComponent extends PositionComponent {
   /// [PositionComponent] to render.
   NineTileBoxComponent({
     this.nineTileBox,
-    Vector2? position,
-    Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
-  }) : super(
-          position: position,
-          size: size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
-        );
+    super.position,
+    super.size,
+    super.scale,
+    super.angle,
+    super.anchor,
+    super.children,
+    super.priority,
+  });
 
   @override
   @mustCallSuper

@@ -1,12 +1,14 @@
 import 'dart:ui';
 
+import 'package:flame/components.dart';
+import 'package:flame/src/effects/provider_interfaces.dart';
 import 'package:meta/meta.dart';
-
-import '../../components.dart';
 
 export '../sprite_animation.dart';
 
-class SpriteAnimationComponent extends PositionComponent with HasPaint {
+class SpriteAnimationComponent extends PositionComponent
+    with HasPaint
+    implements SizeProvider {
   /// The animation used by the component.
   SpriteAnimation? animation;
 
@@ -24,22 +26,16 @@ class SpriteAnimationComponent extends PositionComponent with HasPaint {
     bool? removeOnFinish,
     bool? playing,
     Paint? paint,
-    Vector2? position,
-    Vector2? size,
-    Vector2? scale,
-    double? angle,
-    Anchor? anchor,
-    int? priority,
+    super.position,
+    super.size,
+    super.scale,
+    super.angle,
+    super.nativeAngle,
+    super.anchor,
+    super.children,
+    super.priority,
   })  : removeOnFinish = removeOnFinish ?? false,
-        playing = playing ?? true,
-        super(
-          position: position,
-          size: size,
-          scale: scale,
-          angle: angle,
-          anchor: anchor,
-          priority: priority,
-        ) {
+        playing = playing ?? true {
     if (paint != null) {
       this.paint = paint;
     }
@@ -75,15 +71,6 @@ class SpriteAnimationComponent extends PositionComponent with HasPaint {
           priority: priority,
         );
 
-  /// Component will be removed after animation is done and [removeOnFinish] is
-  /// set.
-  ///
-  /// Note: [SpriteAnimationComponent] will not be removed automatically if loop
-  /// property of [SpriteAnimation] is true.
-  @override
-  bool get shouldRemove =>
-      super.shouldRemove || (removeOnFinish && (animation?.done() ?? false));
-
   @mustCallSuper
   @override
   void render(Canvas canvas) {
@@ -94,10 +81,14 @@ class SpriteAnimationComponent extends PositionComponent with HasPaint {
         );
   }
 
+  @mustCallSuper
   @override
   void update(double dt) {
     if (playing) {
       animation?.update(dt);
+    }
+    if (removeOnFinish && (animation?.done() ?? false)) {
+      removeFromParent();
     }
   }
 }

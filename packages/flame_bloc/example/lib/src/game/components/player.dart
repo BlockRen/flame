@@ -1,31 +1,29 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/geometry.dart';
-import 'package:flame/input.dart';
 import 'package:flame_bloc/flame_bloc.dart';
+import 'package:flame_bloc_example/src/game/components/bullet.dart';
+import 'package:flame_bloc_example/src/game/components/enemy.dart';
+import 'package:flame_bloc_example/src/game/components/explosion.dart';
+import 'package:flame_bloc_example/src/game/game.dart';
+import 'package:flame_bloc_example/src/game_stats/bloc/game_stats_bloc.dart';
+import 'package:flame_bloc_example/src/inventory/bloc/inventory_bloc.dart';
 import 'package:flutter/services.dart';
-
-import './bullet.dart';
-import '../../game_stats/bloc/game_stats_bloc.dart';
-import '../../inventory/bloc/inventory_bloc.dart';
-import '../game.dart';
-import 'enemy.dart';
-import 'explosion.dart';
 
 class PlayerController extends Component
     with
         HasGameRef<SpaceShooterGame>,
-        BlocComponent<GameStatsBloc, GameStatsState> {
+        FlameBlocListenable<GameStatsBloc, GameStatsState> {
   @override
-  bool listenWhen(GameStatsState? previousState, GameStatsState newState) {
-    return previousState?.status != newState.status;
+  bool listenWhen(GameStatsState previousState, GameStatsState newState) {
+    return previousState.status != newState.status;
   }
 
   @override
   void onNewState(GameStatsState state) {
     if (state.status == GameStatus.respawn ||
         state.status == GameStatus.initial) {
-      gameRef.read<GameStatsBloc>().add(const PlayerRespawned());
-      gameRef.add(gameRef.player = PlayerComponent());
+      gameRef.statsBloc.add(const PlayerRespawned());
+      parent?.add(gameRef.player = PlayerComponent());
     }
   }
 }
@@ -33,10 +31,9 @@ class PlayerController extends Component
 class PlayerComponent extends SpriteAnimationComponent
     with
         HasGameRef<SpaceShooterGame>,
-        HasHitboxes,
-        Collidable,
+        CollisionCallbacks,
         KeyboardHandler,
-        BlocComponent<InventoryBloc, InventoryState> {
+        FlameBlocListenable<InventoryBloc, InventoryState> {
   bool destroyed = false;
   late Timer bulletCreator;
 
@@ -44,7 +41,7 @@ class PlayerComponent extends SpriteAnimationComponent
       : super(size: Vector2(50, 75), position: Vector2(100, 500)) {
     bulletCreator = Timer(0.5, repeat: true, onTick: _createBullet);
 
-    addHitbox(HitboxRectangle());
+    add(RectangleHitbox());
   }
 
   @override
@@ -58,6 +55,13 @@ class PlayerComponent extends SpriteAnimationComponent
         textureSize: Vector2(32, 48),
       ),
     );
+  }
+
+  InventoryState? state;
+
+  @override
+  void onNewState(InventoryState state) {
+    this.state = state;
   }
 
   void _createBullet() {
@@ -88,14 +92,17 @@ class PlayerComponent extends SpriteAnimationComponent
 
   @override
   void update(double dt) {
+    super.update(dt);
     bulletCreator.update(dt);
-    shouldRemove = destroyed;
+    if (destroyed) {
+      removeFromParent();
+    }
   }
 
   void takeHit() {
     gameRef.add(ExplosionComponent(x, y));
-    shouldRemove = true;
-    gameRef.read<GameStatsBloc>().add(const PlayerDied());
+    removeFromParent();
+    gameRef.statsBloc.add(const PlayerDied());
   }
 
   @override
@@ -104,14 +111,15 @@ class PlayerComponent extends SpriteAnimationComponent
     Set<LogicalKeyboardKey> keysPressed,
   ) {
     if (keysPressed.contains(LogicalKeyboardKey.tab)) {
-      gameRef.read<InventoryBloc>().add(const NextWeaponEquipped());
+      gameRef.inventoryBloc.add(const NextWeaponEquipped());
       return true;
     }
     return false;
   }
 
   @override
-  void onCollision(Set<Vector2> points, Collidable other) {
+  void onCollision(Set<Vector2> points, PositionComponent other) {
+    super.onCollision(points, other);
     if (other is EnemyComponent) {
       takeHit();
       other.takeHit();

@@ -87,7 +87,6 @@ class Compass extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
     _marksPath = Path();
     for (var i = 0; i < 12; i++) {
       final angle = Transform2D.tau * (i / 12);
@@ -120,7 +119,7 @@ class Compass extends PositionComponent {
 
 class CompassArrow extends PositionComponent {
   CompassArrow({required double width, required double radius})
-      : assert(width <= radius),
+      : assert(width <= radius, 'The width is larger than the radius'),
         _radius = radius,
         _width = width,
         super(size: Vector2(width, 2 * radius), anchor: Anchor.center);
@@ -134,7 +133,6 @@ class CompassArrow extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
     _northPath = Path()
       ..moveTo(0, _radius)
       ..lineTo(_width / 2, 0)
@@ -156,7 +154,7 @@ class CompassArrow extends PositionComponent {
 
 class CompassRim extends PositionComponent {
   CompassRim({required double radius, required double width})
-      : assert(radius > width),
+      : assert(radius > width, 'The width is larger than the radius'),
         _radius = radius,
         _width = width,
         super(
@@ -177,7 +175,6 @@ class CompassRim extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
     _bgPaint.strokeWidth = _width;
     _marksPath = Path();
     final innerRadius = _radius - _width;
